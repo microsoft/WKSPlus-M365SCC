@@ -5,12 +5,25 @@ $LogPathName = Join-Path -Path $LogPath -ChildPath "$($MyInvocation.MyCommand.Na
 Start-Transcript $LogPathName -Append
 
 Write-Verbose "$(Get-Date)"
+
+
 #### install and load module Exchange online V2 #####
 #Install-Module PowershellGet -Force
 #Install-Module -Name ExchangeOnlineManagement -force
 
 
 ### connect to the compliance center####
+function IPPSSession {
+    Get-LabelPolicy -ErrorAction SilentlyContinue | out-null
+    $result = $?
+    return $result
+    Write-Host "you are connected to Compliance Center" -ForegroundColor DarkGreen -BackgroundColor White
+}
+
+if (-not (IPPSSession)) {
+    Connect-IPPSSession
+    Write-Host "$(Get-Date) Establishing Connections:"
+}
 #Connect-IPPSSession
 #Connect-ExchangeOnline
 

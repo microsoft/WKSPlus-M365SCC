@@ -15,6 +15,4 @@ $params = @{
     }
     new-dlpcompliancepolicy @params
 
-    New-DlpComplianceRule -
-
-   
+    New-DlpComplianceRule -Name "WKS-Credit Card Number" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation @{Name="Credit Card Number"; minCount="2"} -BlockAccess $True
