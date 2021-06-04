@@ -8,31 +8,45 @@ Write-Verbose "$(Get-Date)"
 
 #### Conntection #####
 
-Connect-IPPSSession
-Connect-ExchangeOnline
+#Connect-IPPSSession
+#Connect-ExchangeOnline
 
 
 Start-Sleep -Seconds 5
 ##### Settings #####
 
-$domainname =  (Get-AcceptedDomain).domainname[0]
+[Array]$DomainName = Get-AcceptedDomain
+
+$SuffixDomain = $DomainName[0].DomainName
+$Email = "Admin@$SuffixDomain"
 
 
 ##### DLP Policy Parameters. #####
-
 $params = @{
-    ‘Name’ = ‘WKS-Credit Card Number -test’;
-    ‘ExchangeLocation’ =’All’;
-    ‘OneDriveLocation’ = ‘All’;
-    ‘SharePointLocation’ = ‘All’;
-    ‘Mode’ = ‘Enable’
+    'Name' = 'WKS-Credit Card Number-test01';
+    'ExchangeLocation' ='All';
+    'OneDriveLocation' = 'All';
+    'SharePointLocation' = 'All';
+    'EndpointDlpLocation' = 'all';
+    'Mode' = 'Enable'
     }
     new-dlpcompliancepolicy @params
 
-    #### New DLP Rule Low and High volume. ######
-    New-DlpComplianceRule -Name "WKS-Credit Card Number-low" -Policy "WKS-Credit Card Number -test" -ContentContainsSensitiveInformation @{Name="Credit Card Number"; minCount="2";maxCount="5"} -BlockAccess $True -NotifyUser:$true
+    ###### sensitivity Types low Volume ############
+$SensitiveTypes = @( 
+    @{Name="Credit Card Number"; minCount="1"; maxcount="5"}    
+)
 
-    New-DlpComplianceRule -Name "WKS-Credit Card Number-High" -Policy "WKS-Credit Card Number -test" -ContentContainsSensitiveInformation @{Name="Credit Card Number"; minCount="5"} -BlockAccess $True -NotifyUser:$true
+    ###### sensitivity Types low Volume ############
+    $SensitiveTypesHigh = @( 
+        @{Name="Credit Card Number"; minCount="6"}    
+    )
+
+    Start-Sleep -Seconds 5
+    #### New DLP Rule Low and High volume. ######
+     New-DlpComplianceRule -Name "WKS-Credit Card Number-low-01" -Policy "WKS-Credit Card Number-test01" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser 'lastmodified' -blockaccess:$true
+
+    New-DlpComplianceRule -Name "WKS-Credit Card Number-High-02" -Policy "WKS-Credit Card Number-test01" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser 'LastModifier','owner' -blockaccess:$true -BlockAccessScope 'All' -GenerateIncidentReport $email -GenerateAlert
 
 
     Stop-Transcript
