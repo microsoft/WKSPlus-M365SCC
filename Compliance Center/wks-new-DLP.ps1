@@ -1,26 +1,26 @@
 $VerbosePreference = "Continue"
-$LogPath = 'c:\temp'
+$LogPath = "c:\temp"
 
 ##### check if log path excist if not will create it.
 
 If ( !(Test-Path $LogPath) ) 
 {New-Item -ItemType "directory" -Path $LogPath}
 else {
-    write-host ' Folder excist'
+    write-host " Folder excist"
 }
 
 #### write log file ####
 Get-ChildItem "$LogPath\*.log" | Where LastWriteTime -LT (Get-Date).AddDays(-15) | Remove-Item -Confirm:$false
-$LogPathName = Join-Path -Path $LogPath -ChildPath "$($MyInvocation.MyCommand.Name)-$(Get-Date -Format 'MM-dd-yyyy').log"
+$LogPathName = Join-Path -Path $LogPath -ChildPath "$($MyInvocation.MyCommand.Name)-$(Get-Date -Format "MM-dd-yyyy").log"
 Start-Transcript $LogPathName -Append
 
 Write-Verbose "$(Get-Date)"
 
 ###### Connect & Login to ExchangeOnline and Compliance Center (MFA) ######
 $getsessions = Get-PSSession | Select-Object -Property State, Name
-$isconnected = (@($getsessions) -like '@{State=Opened; Name=ExchangeOnlineInternalSession*').Count -gt 0
+$isconnected = (@($getsessions) -like "@{State=Opened; Name=ExchangeOnlineInternalSession*").Count -gt 0
 If ($isconnected -ne "True") {
-    Write-Host -ForegroundColor 'red' 'Will make a connection to Exchange online and Microsoft 365 Compliance Center'
+    Write-Host -ForegroundColor "red" "Will make a connection to Exchange online and Microsoft 365 Compliance Center"
 
     Start-Sleep -seconds 3
 
@@ -28,7 +28,7 @@ Connect-IPPSSession
 Connect-ExchangeOnline
 }
 else {
-   write-host -ForegroundColor 'Green' " You already have a connection to Office365 compliance Center"
+   write-host -ForegroundColor "Green" " You already have a connection to Office365 compliance Center"
 }
 Start-Sleep -Seconds 5
 ##### Settings #####
@@ -40,17 +40,17 @@ $Email = "Admin@$SuffixDomain"
 
 #### check for existing DLP Policy. ####
 
-if (Get-DlpCompliancePolicy -Identity 'WKS-Credit Card Number-test02')
+if (Get-DlpCompliancePolicy -Identity "WKS-Credit Card Number-test02")
 {
  ##### DLP Policy Parameters. #####
 $params = @{
-    'Name' = 'WKS-Credit Card Number-test02';
-    'ExchangeLocation' ='All';
-    'OneDriveLocation' = 'All';
-    'SharePointLocation' = 'All';
-    'EndpointDlpLocation' = 'all';
-    'Teamslocaltion' = 'All';
-    'Mode' = 'Enable'
+    "Name" = "WKS-Credit Card Number-test02";
+    "ExchangeLocation" ="All";
+    "OneDriveLocation" = "All";
+    "SharePointLocation" = "All";
+    "EndpointDlpLocation" = "all";
+    "Teamslocaltion" = "All";
+    "Mode" = "Enable"
     }
     new-dlpcompliancepolicy @params
 
@@ -63,13 +63,13 @@ else
 }
 <##### DLP Policy Parameters. #####
 $params = @{
-    'Name' = 'WKS-Credit Card Number-test02';
-    'ExchangeLocation' ='All';
-    'OneDriveLocation' = 'All';
-    'SharePointLocation' = 'All';
-    'EndpointDlpLocation' = 'all';
-    'Teamslocaltion' = 'All';
-    'Mode' = 'Enable'
+    "Name" = "WKS-Credit Card Number-test02";
+    "ExchangeLocation" ="All";
+    "OneDriveLocation" = "All";
+    "SharePointLocation" = "All";
+    "EndpointDlpLocation" = "all";
+    "Teamslocaltion" = "All";
+    "Mode" = "Enable"
     }
     new-dlpcompliancepolicy @params
 
@@ -85,10 +85,10 @@ $SensitiveTypes = @(
 
     Start-Sleep -Seconds 5
     #### New DLP Rule Low and High volume. ######
-     New-DlpComplianceRule -Name "WKS-Credit Card Number-low-01" -Policy "WKS-Credit Card Number-test02" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser 'lastmodifier'
+     New-DlpComplianceRule -Name "WKS-Credit Card Number-low-01" -Policy "WKS-Credit Card Number-test02" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser "lastmodifier"
 
 
-    New-DlpComplianceRule -Name "WKS-Credit Card Number-High-03" -Policy "WKS-Credit Card Number-test02" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser 'LastModifier','owner' -blockaccess:$true -BlockAccessScope 'All' -GenerateIncidentReport $email 
+    New-DlpComplianceRule -Name "WKS-Credit Card Number-High-03" -Policy "WKS-Credit Card Number-test02" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email 
 
 
     Stop-Transcript
