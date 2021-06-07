@@ -1,18 +1,16 @@
 ﻿$VerbosePreference = "Continue"
 $LogPath = 'c:\temp'
-
-##### check if log path excist if not will create it.
-
-If ( !(Test-Path $LogPath) ) 
-{New-Item -ItemType "directory" -Path $LogPath}
-else {
-    write-host ' Folder excist'
-}
 Get-ChildItem "$LogPath\*.log" | Where LastWriteTime -LT (Get-Date).AddDays(-15) | Remove-Item -Confirm:$false
 $LogPathName = Join-Path -Path $LogPath -ChildPath "$($MyInvocation.MyCommand.Name)-$(Get-Date -Format 'MM-dd-yyyy').log"
 Start-Transcript $LogPathName -Append
 
 Write-Verbose "$(Get-Date)"
+
+
+#### install and load module Exchange online V2 #####
+#Install-Module PowershellGet -Force
+#Install-Module -Name ExchangeOnlineManagement -force
+
 
 ###### Connect & Login to ExchangeOnline and Compliance Center (MFA) ######
 $getsessions = Get-PSSession | Select-Object -Property State, Name
@@ -41,6 +39,5 @@ Start-Sleep -Seconds 30
 
 ###### publish labels
 
-New-LabelPolicy -name 'WKS-Highly-confidential-publish-03' -Settings @{mandatory=' false'} -AdvancedSettings @{requiredowngradejustification= 'true'} -Labels 'WKS-Highly-confidential-04' -SkypeLocation 'all' -OneDriveLocation 'all' -ExchangeLocation 'all' -SharePointLocation 'all' -ModernGroupLocation $groups
-
+New-LabelPolicy -name 'WKS-Highly-confidential-publish-03' -Settings @{mandatory=' false'} -AdvancedSettings @{requiredowngradejustification= 'true'} -Labels 'WKS-Highly-confidential-04' 
 Stop-Transcript

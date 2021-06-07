@@ -8,6 +8,8 @@ If ( !(Test-Path $LogPath) )
 else {
     write-host ' Folder excist'
 }
+
+#### write log file ####
 Get-ChildItem "$LogPath\*.log" | Where LastWriteTime -LT (Get-Date).AddDays(-15) | Remove-Item -Confirm:$false
 $LogPathName = Join-Path -Path $LogPath -ChildPath "$($MyInvocation.MyCommand.Name)-$(Get-Date -Format 'MM-dd-yyyy').log"
 Start-Transcript $LogPathName -Append
@@ -19,6 +21,7 @@ $getsessions = Get-PSSession | Select-Object -Property State, Name
 $isconnected = (@($getsessions) -like '@{State=Opened; Name=ExchangeOnlineInternalSession*').Count -gt 0
 If ($isconnected -ne "True") {
     Write-Host -ForegroundColor 'red' 'Will make a connection to Exchange online and Microsoft 365 Compliance Center'
+
     Start-Sleep -seconds 3
 
 Connect-IPPSSession
@@ -37,14 +40,28 @@ $Email = "Admin@$SuffixDomain"
 
 #### check for existing DLP Policy. ####
 
-if ($check = Get-DlpCompliancePolicy -Identity 'WKS-Credit Card Number-test02'
+if (Get-DlpCompliancePolicy -Identity 'WKS-Credit Card Number-test02')
 {
-    
-}
-)
-else 
+ ##### DLP Policy Parameters. #####
+$params = @{
+    'Name' = 'WKS-Credit Card Number-test02';
+    'ExchangeLocation' ='All';
+    'OneDriveLocation' = 'All';
+    'SharePointLocation' = 'All';
+    'EndpointDlpLocation' = 'all';
+    'Teamslocaltion' = 'All';
+    'Mode' = 'Enable'
+    }
+    new-dlpcompliancepolicy @params
 
-##### DLP Policy Parameters. #####
+}
+
+else 
+{
+
+    Write-Host " DLP Policy already excist"
+}
+<##### DLP Policy Parameters. #####
 $params = @{
     'Name' = 'WKS-Credit Card Number-test02';
     'ExchangeLocation' ='All';
@@ -60,7 +77,7 @@ $params = @{
 $SensitiveTypes = @( 
     @{Name="Credit Card Number"; minCount="1"; maxcount="5"}    
 )
-
+#>
     ###### sensitivity Types High Volume ############
     $SensitiveTypesHigh = @( 
         @{Name="Credit Card Number"; minCount="6";}    
