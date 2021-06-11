@@ -40,11 +40,11 @@ $Email = "Admin@$SuffixDomain"
 
 #### check for existing DLP Policy. ####
 
-if (Get-DlpCompliancePolicy -Identity "WKS-Credit Card Number-test02")
+if (Get-DlpCompliancePolicy -Identity "WKS-Credit Card Number")
 {
  ##### DLP Policy Parameters. #####
 $params = @{
-    "Name" = "WKS-Credit Card Number-test02";
+    "Name" = "WKS-Credit Card Number-test";
     "ExchangeLocation" ="All";
     "OneDriveLocation" = "All";
     "SharePointLocation" = "All";
@@ -72,12 +72,14 @@ $params = @{
     "Mode" = "Enable"
     }
     new-dlpcompliancepolicy @params
+#>
+
 
     ###### sensitivity Types low Volume ############
 $SensitiveTypes = @( 
     @{Name="Credit Card Number"; minCount="1"; maxcount="5"}    
 )
-#>
+
     ###### sensitivity Types High Volume ############
     $SensitiveTypesHigh = @( 
         @{Name="Credit Card Number"; minCount="6";}    
@@ -85,10 +87,10 @@ $SensitiveTypes = @(
 
     Start-Sleep -Seconds 5
     #### New DLP Rule Low and High volume. ######
-     New-DlpComplianceRule -Name "WKS-Credit Card Number-low-01" -Policy "WKS-Credit Card Number-test02" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser "lastmodifier"
+     New-DlpComplianceRule -Name "WKS-Credit Card Number-low" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser "lastmodifier"
 
 
-    New-DlpComplianceRule -Name "WKS-Credit Card Number-High-03" -Policy "WKS-Credit Card Number-test02" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email 
+    New-DlpComplianceRule -Name "WKS-Credit Card Number-High" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email 
 
 
     Stop-Transcript
