@@ -155,3 +155,48 @@ function createretention
     #>
 
 }
+
+
+function exitScript
+{
+    Get-PSSession | Remove-PSSession
+    logWrite 6 $true "Session removed successfully."
+}
+
+################ main Script start ###################
+
+if(!(Test-Path($logCSV))){
+    # if log doesn't exist then must be first time we run this, so go to initialization
+    initialization
+} else {
+    # if log already exists, check if we need to recover
+    recovery
+    connectExo
+    connectSCC
+}
+
+#use variable to control phases
+
+if($nextPhase -eq 1){
+checkModule
+}
+
+if($nextPhase -eq 2){
+connectExo
+}
+
+if($nextPhase -eq 3){
+connectSCC
+}
+
+if($nextPhase -eq 4){
+new-SPOnlineList
+}
+
+if ($nextPhase -eq 5){
+createPolicy
+}
+
+if ($nextPhase -eq 6){
+exitScript
+}
