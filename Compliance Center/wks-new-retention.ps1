@@ -1,11 +1,8 @@
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\LabelLog.csv"
+$LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
-
-#label policy
-$labelPolicyName = "WKS-Highly-confidential-publish"
 
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -110,57 +107,72 @@ function connectSCC
     }
 }
 
-function new-SPOnlineList {
-    #variables that needs to be set before starting the script
-    $siteURL = "https://spfire.sharepoint.com/sites/WKS-Compliance"
-    $adminUrl = "https://spfire-admin.sharepoint.com"
-    $userName = "mpadmin@spfire.onmicrosoft.com"
-    $listTitle = "Finance"
-    $listDescription = "Finance documents"
-    $listTemplate = 101
-     
-    # Let the user fill in their password in the PowerShell window
-    $password = Read-Host "Please enter the password for $($userName)" -AsSecureString
-     
-    # set SharePoint Online credentials
-    $SPOCredentials = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($userName, $password)
-         
-    # Creating client context object
-    $context = New-Object Microsoft.SharePoint.Client.ClientContext($siteURL)
-    $context.credentials = $SPOCredentials
-     
-    #create list using ListCreationInformation object (lci)
-    $lci = New-Object Microsoft.SharePoint.Client.ListCreationInformation
-    $lci.title = $listTitle
-    $lci.description = $listDescription
-    $lci.TemplateType = $listTemplate
-    $list = $context.web.lists.add($lci)
-    $context.load($list)
-    #send the request containing all operations to the server
-    try{
-        $context.executeQuery()
-        write-host "info: Created $($listTitle)" -foregroundcolor green
-    }
-    catch{
-        write-host "info: $($_.Exception.Message)" -foregroundcolor red
-    }  
-}
-new-SPOnlineList
+###### get domain name
 
-function createretention
+$domainName = (Get-AcceptedDomain | ?{$_.Default -eq $false}).DomainName
+$SPO = $domainName.Split('.')[0]
+
+function checkModule 
 {
-    <#
-    TO DO:
-    Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
-    #>
-
+    try {
+        Get-Command Connect-SPOService -ErrorAction Stop | Out-Null
+    } catch {
+        logWrite 1 $false "SharePointOnlineManagement module is not installed! Exiting."
+        exit
+    }
+    logWrite 1 $True "SharePointOnlineManagement module is installed."
+    $global:nextPhase++
 }
 
+function connectSPO
+{
+    try {
+        Get-Command Set-SPOHomeSite -ErrorAction:Stop | Out-Null
+    }
+    catch {
+        Write-Host "Connecting to Compliance Center..."
+        Connect-SPOService "https://$spo-admin.sharepoint.com"
+        try {
+            get-command Set-SPOHomeSite -ErrorAction:Stop | Out-Null
+        } catch {
+            logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
+            exit
+        }
+        if($global:recovery -eq $false){
+            logWrite 3 $true "Successfully connected to Compliance Center"
+            $global:nextPhase++
+        }
+    }
+}
+
+function createsite
+{
+    $siteName = "WKS-Compliance-Center"
+    $siteUrl = "https://$spo.sharepoint.com/sites/$siteName"
+    $owner = "admin@$spo.onmicrosoft.com"
+    $template = "STS#3"
+    $Storagequota = "1024" #MB
+
+    Write-Host "Creating Sharepoint Site"
+
+    try {
+        New-SPOSite –url $siteUrl -Owner $owner –Template $template –Storagequota $Storagequota -Title $siteName
+        } 
+        catch {
+        logWrite 5 $false "Error creating SharePoint Site"
+        exit
+    }
+    logWrite 5 $true "Successfully created SharePoint Site"
+    $global:nextPhase++
+    write-host "Sleeping for 30 seconds..."
+    Start-Sleep -Seconds 30
+
+}
 
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully."
+    logWrite 6 $true "Session removed successfully"
 }
 
 ################ main Script start ###################
@@ -190,12 +202,12 @@ connectSCC
 }
 
 if($nextPhase -eq 4){
-new-SPOnlineList
+connectSPO
 }
 
-if ($nextPhase -eq 5){
-createPolicy
-}
+if($nextPhase -eq 5){
+createsite
+    }
 
 if ($nextPhase -eq 6){
 exitScript
