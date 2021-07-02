@@ -3,7 +3,7 @@ $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
-
+$global:Sharepoint = ""
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
@@ -69,7 +69,7 @@ function checkModuleMSOL
 {
     try {
         Get-Command Connect-MsolService -ErrorAction Stop | Out-Null
-
+        
     } catch {
         logWrite 2 $false "MSOL module is not installed! Exiting."
         exit
@@ -123,19 +123,18 @@ function connectSCC
 function ConnectMsolService
 {
     try {
-        Get-Command Get-MsolDomain -ErrorAction Stop
+        Get-MsolDomain -ErrorAction Stop
     }
     catch {
         Write-Host "Connecting to msol Service..."
         Connect-MsolService
         try {
-            Get-Command Get-MsolContact -ErrorAction Stop
+        Get-MsolContact -ErrorAction Stop
         } catch {
             logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
         }
-        if($global:recovery -eq $false)
-        {
+        if($global:recovery -eq $false){
             logWrite 5 $true "Successfully connected to MSOL Service"
             $global:nextPhase++
         }
@@ -146,7 +145,8 @@ Function getdomain
 {
     try{
         $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
-        $SharepointURL = "$($InitialDomain.name.split(".")[0]).sharepoint.com"
+        $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
+        write-host $global:Sharepoint
    }catch {
         logWrite 6 $false "unable to fetch all accepted Domains."
         exit
@@ -161,13 +161,15 @@ Function getdomain
 function connectSPO
 {
     try {
-        Get-Command Connect-SPOService -ErrorAction:Stop | Out-Null
+        get-SPOService -ErrorAction:Stop | Out-Null
     }
     catch {
         Write-Host "Connecting to Compliance Center..."
-        Connect-SPOService "https://$SharepointURL-admin.sharepoint.com"
+        $SPOurlConnect = "https://$global:Sharepoint-admin.sharepoint.com"
+        write-host $SPOurlConnect
+        Connect-SPOService -url $SPOurlConnect
         try {
-            get-command Connect-SPOService -ErrorAction:Stop | Out-Null
+            get-SPOService -ErrorAction:Stop | Out-Null
         } catch {
             logWrite 7 $false "Couldn't connect to Sharepoint Online.  Exiting."
             exit
