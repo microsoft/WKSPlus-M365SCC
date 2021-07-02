@@ -69,6 +69,7 @@ function checkModuleMSOL
 {
     try {
         Get-Command Connect-MsolService -ErrorAction Stop | Out-Null
+
     } catch {
         logWrite 2 $false "MSOL module is not installed! Exiting."
         exit
@@ -133,7 +134,8 @@ function ConnectMsolService
             logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
         }
-        if($global:recovery -eq $false){
+        if($global:recovery -eq $false)
+        {
             logWrite 5 $true "Successfully connected to MSOL Service"
             $global:nextPhase++
         }
