@@ -53,7 +53,7 @@ function recovery
     }
 }
 
-function checkModule 
+function checkModule
 {
     try {
         Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null
@@ -62,6 +62,18 @@ function checkModule
         exit
     }
     logWrite 1 $True "ExchangeOnlineManagement module is installed."
+    $global:nextPhase++
+}
+
+function checkModuleMSOL
+{
+    try {
+        Get-Command Connect-MsolService -ErrorAction Stop | Out-Null
+    } catch {
+        logWrite 2 $false "MSOL module is not installed! Exiting."
+        exit
+    }
+    logWrite 2 $True "MSOL module is installed."
     $global:nextPhase++
 }
 
@@ -76,11 +88,11 @@ function connectExo
         try {
             Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
         } catch {
-            logWrite 2 $false "Couldn't connect to Exchange Online.  Exiting."
+            logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 2 $true "Successfully connected to Exchange Online"
+            logWrite 3 $true "Successfully connected to Exchange Online"
             $global:nextPhase++
         }
     }
@@ -97,82 +109,79 @@ function connectSCC
         try {
             Get-Command Set-Label -ErrorAction:Stop | Out-Null
         } catch {
-            logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
+            logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Compliance Center"
+            logWrite 4 $true "Successfully connected to Compliance Center"
             $global:nextPhase++
         }
     }
 }
 
-###### get domain name
-
-$domainName = (Get-AcceptedDomain | ?{$_.Default -eq $false}).DomainName
-$SPO = $domainName.Split('.')[0]
-
-function checkModule 
+function ConnectMsolService
 {
     try {
-        Get-Command Connect-SPOService -ErrorAction Stop | Out-Null
-    } catch {
-        logWrite 1 $false "SharePointOnlineManagement module is not installed! Exiting."
+        Get-Command Get-MsolDomain -ErrorAction Stop
+    }
+    catch {
+        Write-Host "Connecting to msol Service..."
+        Connect-MsolService
+        try {
+            Get-Command Get-MsolContact -ErrorAction Stop
+        } catch {
+            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
+            exit
+        }
+        if($global:recovery -eq $false){
+            logWrite 5 $true "Successfully connected to MSOL Service"
+            $global:nextPhase++
+        }
+    }
+}
+
+Function getdomain
+{
+    try{
+        $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
+        $SharepointURL = "$($InitialDomain.name.split(".")[0]).sharepoint.com"
+   }catch {
+        logWrite 6 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 1 $True "SharePointOnlineManagement module is installed."
+    logWrite 6 $True "Able to get all accepted Domains."
     $global:nextPhase++
+
+
 }
+
 
 function connectSPO
 {
     try {
-        Get-Command Set-SPOHomeSite -ErrorAction:Stop | Out-Null
+        Get-Command Connect-SPOService -ErrorAction:Stop | Out-Null
     }
     catch {
         Write-Host "Connecting to Compliance Center..."
-        Connect-SPOService "https://$spo-admin.sharepoint.com"
+        Connect-SPOService "https://$SharepointURL-admin.sharepoint.com"
         try {
-            get-command Set-SPOHomeSite -ErrorAction:Stop | Out-Null
+            get-command Connect-SPOService -ErrorAction:Stop | Out-Null
         } catch {
-            logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
+            logWrite 7 $false "Couldn't connect to Sharepoint Online.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Compliance Center"
+            logWrite 7 $true "Successfully connected to Sharepoint Online"
             $global:nextPhase++
         }
     }
 }
 
-function createsite
-{
-    $siteName = "WKS-Compliance-Center"
-    $siteUrl = "https://$spo.sharepoint.com/sites/$siteName"
-    $owner = "admin@$spo.onmicrosoft.com"
-    $template = "STS#3"
-    $Storagequota = "1024" #MB
-
-    Write-Host "Creating Sharepoint Site"
-
-    try {
-        New-SPOSite –url $siteUrl -Owner $owner –Template $template –Storagequota $Storagequota -Title $siteName
-        } 
-        catch {
-        logWrite 5 $false "Error creating SharePoint Site"
-        exit
-    }
-    logWrite 5 $true "Successfully created SharePoint Site"
-    $global:nextPhase++
-    write-host "Sleeping for 30 seconds..."
-    Start-Sleep -Seconds 30
-
-}
 
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully"
+    logWrite 8 $true "Session removed successfully"
 }
 
 ################ main Script start ###################
@@ -181,34 +190,53 @@ if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
 } else {
-    # if log already exists, check if we need to recover
+    # if log already exists, check if we need to recover#
     recovery
+    checkModule
+    checkModuleMSOL
     connectExo
     connectSCC
+    ConnectMsolService
+    getdomain
+    connectSPO
+    
+
 }
 
 #use variable to control phases
+
+if($nextPhase -eq 0){
+initialization
+}
 
 if($nextPhase -eq 1){
 checkModule
 }
 
-if($nextPhase -eq 2){
-connectExo
+if($nextPhase -eq2){
+checkModuleMSOL    
 }
 
 if($nextPhase -eq 3){
-connectSCC
+connectExo
 }
 
 if($nextPhase -eq 4){
-connectSPO
+connectSCC
 }
 
 if($nextPhase -eq 5){
-createsite
-    }
+ConnectMsolService
+}
 
-if ($nextPhase -eq 6){
+if($nextPhase -eq 6){
+getdomain
+}
+
+if($nextPhase -eq 7){
+connectSPO
+}
+
+if ($nextPhase -eq 8){
 exitScript
 }
