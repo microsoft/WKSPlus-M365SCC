@@ -158,33 +158,57 @@ Function getdomain
 }
 
 
-function connectSPO
+function createSPOSite
 {
-    try {
-        get-SPOService -ErrorAction:Stop | Out-Null
-    }
-    catch {
-        Write-Host "Connecting to Compliance Center..."
-        $SPOurlConnect = "https://$global:Sharepoint-admin.sharepoint.com"
-        write-host $SPOurlConnect
-        Connect-SPOService -url $SPOurlConnect
-        try {
-            get-SPOService -ErrorAction:Stop | Out-Null
-        } catch {
-            logWrite 7 $false "Couldn't connect to Sharepoint Online.  Exiting."
-            exit
-        }
-        if($global:recovery -eq $false){
-            logWrite 7 $true "Successfully connected to Sharepoint Online"
-            $global:nextPhase++
-        }
-    }
+    param
+      (
+          [string]$Title  = "wks-compliance-center",
+          [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center",
+          [string]$Owner = "admin@$global:Sharepoint.onmicrosoft.com",
+          [int]$StorageQuota = "1024",
+          [int]$ResourceQuota = "1024",
+          [string]$Template = "STS#3"
+      )
+   
+  #Connection parameters 
+  $AdminURL = "https://$global:Sharepoint-admin.sharepoint.com"
+   
+  Try{
+      #Connect to Office 365
+      Connect-SPOService -Url $AdminURL
+    
+      #Check if the site collection exists already
+      $SiteExists = Get-SPOSite | where {$_.url -eq $URL}
+      #Check if site exists in the recycle bin
+      $SiteExistsInRecycleBin = Get-SPODeletedSite | where {$_.url -eq $URL}
+   
+      If($SiteExists -ne $null)
+      {
+          write-host "Site $($url) exists already!" -foregroundcolor red
+      }
+      elseIf($SiteExistsInRecycleBin -ne $null)
+      {
+          write-host "Site $($url) exists in the recycle bin!" -foregroundcolor red
+      }
+      else
+      {
+          #sharepoint online create site collection powershell
+          New-SPOSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -NoWait -ResourceQuota $ResourceQuota -Template $Template
+          write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
+      }
+  }
+  catch {
+          logWrite 7 $false "Unable to create the SharePoint Website."
+          exit
+      }
+      logWrite 7 $True "Unable to create the SharePoint Website."
+      $global:nextPhase++
 }
-
 
 function exitScript
 {
     Get-PSSession | Remove-PSSession
+    Disconnect-SPOService
     logWrite 8 $true "Session removed successfully"
 }
 
@@ -202,7 +226,8 @@ if(!(Test-Path($logCSV))){
     connectSCC
     ConnectMsolService
     getdomain
-    connectSPO
+    createSPOSite
+
     
 
 }
@@ -238,8 +263,8 @@ getdomain
 }
 
 if($nextPhase -eq 7){
-connectSPO
-}
+    createSPOSite
+    }
 
 if ($nextPhase -eq 8){
 exitScript
