@@ -78,6 +78,19 @@ function checkModuleMSOL
     $global:nextPhase++
 }
 
+function installMSOL
+{
+    try {
+        Install-Module MSOnline
+    }
+    catch {
+        logWrite 3 $false "unable to install msonline Module"
+        exit
+    }
+    logWrite 3 $true "Installing MSOnline Module."
+    $global:nextPhase++
+}
+
 function connectExo
 {
     try {
@@ -89,11 +102,11 @@ function connectExo
         try {
             Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
         } catch {
-            logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
+            logWrite 4 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Exchange Online"
+            logWrite 4 $true "Successfully connected to Exchange Online"
             $global:nextPhase++
         }
     }
@@ -110,11 +123,11 @@ function connectSCC
         try {
             Get-Command Set-Label -ErrorAction:Stop | Out-Null
         } catch {
-            logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
+            logWrite 5 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 4 $true "Successfully connected to Compliance Center"
+            logWrite 5 $true "Successfully connected to Compliance Center"
             $global:nextPhase++
         }
     }
@@ -131,11 +144,11 @@ function ConnectMsolService
         try {
         Get-MsolContact -ErrorAction Stop
         } catch {
-            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
+            logWrite 6 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 5 $true "Successfully connected to MSOL Service"
+            logWrite 6 $true "Successfully connected to MSOL Service"
             $global:nextPhase++
         }
     }
@@ -148,10 +161,10 @@ Function getdomain
         $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
         write-host $global:Sharepoint
    }catch {
-        logWrite 6 $false "unable to fetch all accepted Domains."
+        logWrite 7 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 6 $True "Able to get all accepted Domains."
+    logWrite 7 $True "Able to get all accepted Domains."
     $global:nextPhase++
 
 
@@ -198,10 +211,10 @@ function createSPOSite
       }
   }
   catch {
-          logWrite 7 $false "Unable to create the SharePoint Website."
+          logWrite 8 $false "Unable to create the SharePoint Website."
           exit
       }
-      logWrite 7 $True "Unable to create the SharePoint Website."
+      logWrite 8 $True "Unable to create the SharePoint Website."
       $global:nextPhase++
 }
 
@@ -209,7 +222,7 @@ function exitScript
 {
     Get-PSSession | Remove-PSSession
     Disconnect-SPOService
-    logWrite 8 $true "Session removed successfully"
+    logWrite 9 $true "Session removed successfully"
 }
 
 ################ main Script start ###################
@@ -222,6 +235,7 @@ if(!(Test-Path($logCSV))){
     recovery
     checkModule
     checkModuleMSOL
+    installMSOL
     connectExo
     connectSCC
     ConnectMsolService
@@ -246,26 +260,30 @@ if($nextPhase -eq2){
 checkModuleMSOL    
 }
 
-if($nextPhase -eq 3){
-connectExo
+if($nextPhase -eq3){
+installMSOL
 }
 
 if($nextPhase -eq 4){
-connectSCC
+connectExo
 }
 
 if($nextPhase -eq 5){
-ConnectMsolService
+connectSCC
 }
 
 if($nextPhase -eq 6){
-getdomain
+ConnectMsolService
 }
 
 if($nextPhase -eq 7){
+getdomain
+}
+
+if($nextPhase -eq 8){
     createSPOSite
     }
 
-if ($nextPhase -eq 8){
+if ($nextPhase -eq 9){
 exitScript
 }
