@@ -24,7 +24,7 @@ function initialization
     {
         New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
     }
-        Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
+        Add-Content -Path $LogCSV -Value 'Phase,Result,DateTime,Status'
         logWrite 0 $true "Initialization completed"
 }
 
@@ -78,18 +78,6 @@ function checkModuleMSOL
     $global:nextPhase++
 }
 
-function installMSOL
-{
-    try {
-        Install-Module MSOnline
-    }
-    catch {
-        logWrite 3 $false "unable to install msonline Module"
-        exit
-    }
-    logWrite 3 $true "Installing MSOnline Module."
-    $global:nextPhase++
-}
 
 function connectExo
 {
@@ -102,11 +90,11 @@ function connectExo
         try {
             Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
         } catch {
-            logWrite 4 $false "Couldn't connect to Exchange Online.  Exiting."
+            logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 4 $true "Successfully connected to Exchange Online"
+            logWrite 3 $true "Successfully connected to Exchange Online"
             $global:nextPhase++
         }
     }
@@ -123,11 +111,11 @@ function connectSCC
         try {
             Get-Command Set-Label -ErrorAction:Stop | Out-Null
         } catch {
-            logWrite 5 $false "Couldn't connect to Compliance Center.  Exiting."
+            logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 5 $true "Successfully connected to Compliance Center"
+            logWrite 4 $true "Successfully connected to Compliance Center"
             $global:nextPhase++
         }
     }
@@ -144,11 +132,11 @@ function ConnectMsolService
         try {
         Get-MsolContact -ErrorAction Stop
         } catch {
-            logWrite 6 $false "Couldn't connect to MSOL Service.  Exiting."
+            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 6 $true "Successfully connected to MSOL Service"
+            logWrite 5 $true "Successfully connected to MSOL Service"
             $global:nextPhase++
         }
     }
@@ -161,10 +149,10 @@ Function getdomain
         $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
         write-host $global:Sharepoint
    }catch {
-        logWrite 7 $false "unable to fetch all accepted Domains."
+        logWrite 6 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 7 $True "Able to get all accepted Domains."
+    logWrite 6 $True "Able to get all accepted Domains."
     $global:nextPhase++
 
 
@@ -198,10 +186,12 @@ function createSPOSite
       If($SiteExists -ne $null)
       {
           write-host "Site $($url) exists already!" -foregroundcolor red
+          Remove-SPOSite -Identity $SiteExists
       }
       elseIf($SiteExistsInRecycleBin -ne $null)
       {
           write-host "Site $($url) exists in the recycle bin!" -foregroundcolor red
+          Remove-SPODeletedSite -Identity $SiteExistsInRecycleBin
       }
       else
       {
@@ -211,12 +201,41 @@ function createSPOSite
       }
   }
   catch {
-          logWrite 8 $false "Unable to create the SharePoint Website."
+          logWrite 7 $false "Unable to create the SharePoint Website."
           exit
       }
-      logWrite 8 $True "Unable to create the SharePoint Website."
+      logWrite 7 $True "Able to create the SharePoint Website."
       $global:nextPhase++
 }
+
+function NewRetentionPolicy
+{
+    Try{
+      
+      #Check if the site collection exists already
+      $rententionExists = Get-RetentionCompliancePolicy -Identity "WKS-Compliance-Retention-SPO-3D"
+              
+      If($rententionExists -ne $null)
+      {
+          write-host "Retention Policy exists already!" -foregroundcolor red
+      }
+      
+      else
+      {
+          #Create compliance retention Policy
+          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true -
+          New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-test" -RetentionDuration 3
+          write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
+      }
+  }
+  catch {
+          logWrite 8 $false "Unable to create the Retention Policy and Rule."
+          exit
+      }
+      logWrite 8 $True "The Retention policy and rule has been created."
+      $global:nextPhase++
+}
+
 
 function exitScript
 {
@@ -235,12 +254,12 @@ if(!(Test-Path($logCSV))){
     recovery
     checkModule
     checkModuleMSOL
-    installMSOL
     connectExo
     connectSCC
     ConnectMsolService
     getdomain
     createSPOSite
+    NewRetentionPolicy
 
     
 
@@ -260,29 +279,29 @@ if($nextPhase -eq2){
 checkModuleMSOL    
 }
 
-if($nextPhase -eq3){
-installMSOL
-}
-
-if($nextPhase -eq 4){
+if($nextPhase -eq 3){
 connectExo
 }
 
-if($nextPhase -eq 5){
+if($nextPhase -eq 4){
 connectSCC
 }
 
-if($nextPhase -eq 6){
+if($nextPhase -eq 5){
 ConnectMsolService
 }
 
-if($nextPhase -eq 7){
+if($nextPhase -eq 6){
 getdomain
 }
 
-if($nextPhase -eq 8){
+if($nextPhase -eq 7){
     createSPOSite
-    }
+}
+
+if ($nextPhase -eq 8){
+    NewRetentionPolicy
+}
 
 if ($nextPhase -eq 9){
 exitScript
