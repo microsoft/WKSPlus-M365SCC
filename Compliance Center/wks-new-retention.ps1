@@ -210,16 +210,13 @@ function createSPOSite
 
 function NewRetentionPolicy
 {
-    Try{
+    Try
+    {
       
       #Check if the site collection exists already
-      $rententionExists = Get-RetentionCompliancePolicy -Identity "WKS-Compliance-Retention-SPO-3D"
-              
-      If($rententionExists -ne $null)
-      {
-          write-host "Retention Policy exists already!" -foregroundcolor red
-      }
-      
+      Get-RetentionCompliancePolicy -Identity "WKS-Compliance-Retention-SPO-3D" -ErrorAction 
+      write-host "Retention Policy exists already!" -foregroundcolor red
+          
       else
       {
           #Create compliance retention Policy
@@ -235,7 +232,6 @@ function NewRetentionPolicy
       logWrite 8 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
-
 
 function exitScript
 {
