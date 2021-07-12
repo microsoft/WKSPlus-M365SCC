@@ -223,7 +223,7 @@ function NewRetentionPolicy
       else
       {
           #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true -
+          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true
           New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-test" -RetentionDuration 3
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
       }
