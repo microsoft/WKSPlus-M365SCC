@@ -155,6 +155,7 @@ function createPolicy
     $global:nextPhase++
 }
 
+
 function exitScript
 {
     Get-PSSession | Remove-PSSession

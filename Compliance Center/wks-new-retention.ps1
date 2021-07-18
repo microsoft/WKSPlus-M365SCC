@@ -4,6 +4,7 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
+$global:
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
@@ -186,12 +187,12 @@ function createSPOSite
       If($SiteExists -ne $null)
       {
           write-host "Site $($url) exists already!" -foregroundcolor red
-          Remove-SPOSite -Identity $SiteExists
+         
       }
       elseIf($SiteExistsInRecycleBin -ne $null)
       {
           write-host "Site $($url) exists in the recycle bin!" -foregroundcolor red
-          Remove-SPODeletedSite -Identity $SiteExistsInRecycleBin
+         
       }
       else
       {
@@ -212,18 +213,12 @@ function NewRetentionPolicy
 {
     Try
     {
-      
-      #Check if the site collection exists already
-      Get-RetentionCompliancePolicy -Identity "WKS-Compliance-Retention-SPO-3D" -ErrorAction 
-      write-host "Retention Policy exists already!" -foregroundcolor red
-          
-      else
-      {
-          #Create compliance retention Policy
+     
+       #Create compliance retention Policy
           New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true -workload
           New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-test" -RetentionDuration 3
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
-      }
+      
   }
   catch {
           logWrite 8 $false "Unable to create the Retention Policy and Rule."
@@ -232,7 +227,102 @@ function NewRetentionPolicy
       logWrite 8 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
+# -------------------
+# Create Compliance Tag
+# -------------------
+Function CreateComplianceTag
+{
+    Param(
+        # File path needed to check
+        [Parameter(Mandatory = $true)]
+        [String]$name = "wks-compliance-retention-Tag-3D"
 
+    )
+  try
+    {
+         # Retrieve existing compliance tags
+         $tags = InvokePowerShellCmdlet "Get-ComplianceTag"
+        foreach($lab in $labels)
+        {
+            # Cmdlet parameters
+
+            $name = [String]::Empty;
+            $cmdlet = 'New-ComplianceTag'
+            if ([String]::IsNullOrEmpty($lab.'Name (Required)'))
+            {
+                WriteToLog -Type "Failed" -Message "Could not acquire table for writing."
+                throw;
+            }
+            else
+            {
+                $name = $lab.'Name (Required)'
+                $cmdlet += " -Name '" + $name + "'"
+            }
+            if (![String]::IsNullOrEmpty($lab.'Comment (Optional)'))
+            {
+                $para = $lab.'Comment (Optional)'
+                $cmdlet += " -Comment '" + $para + "'"
+            }
+            if (![String]::IsNullOrEmpty($lab.'IsRecordLabel (Required)'))
+            {
+                $para = $lab.'IsRecordLabel (Required)'
+                $cmdlet += " -IsRecordLabel " + $para
+            }
+            if (![String]::IsNullOrEmpty($lab.'RetentionAction (Optional)'))
+            {
+                $para = $lab.'RetentionAction (Optional)'
+                $cmdlet += " -RetentionAction " + $para 
+            }
+            if (![String]::IsNullOrEmpty($lab.'RetentionDuration (Optional)'))
+            {
+                $para = $lab.'RetentionDuration (Optional)'
+                $cmdlet += " -RetentionDuration " + $para
+            }
+            if (![String]::IsNullOrEmpty($lab.'RetentionType (Optional)'))
+            {
+                $para = $lab.'RetentionType (Optional)'
+                $cmdlet += " -RetentionType " + $para
+            }
+            if (![String]::IsNullOrEmpty($lab.'ReviewerEmail (Optional)'))
+            {
+                $emails = $lab.'ReviewerEmail (Optional)'.Split(",") | ForEach-Object { $_.Trim() }
+                if (($emails -ne $null) -and ($emails.Count -ne 0))
+                {
+                    $eml = '@('
+                    foreach($email in $emails)
+                    {
+                        $eml += "'{0}'," -f $email
+                    }
+                    $eml = $eml.Substring(0, $eml.Length - 1) + ')'
+                    
+                    $cmdlet += " -ReviewerEmail " + $eml
+                }
+            }
+            # If the tag already exists, skip for creation
+            if (($tags -eq $null) -or ($tags | ? { $_.Name.ToLower() -eq $name.ToLower() }) -eq $null)
+            {
+                # Create compliance tag
+                $msg = "Execute Cmdlet : {0}" -f $cmdlet
+                
+                $ret = InvokePowerShellCmdlet $cmdlet
+            
+                if ($ret -eq $null)
+                {
+                    WriteToLog -Type "Failed" $error[0]
+                    break;
+                }
+            }
+            else
+            {
+                WriteToLog -Type "Warning" -Message "The tag '$name' already exists! Skip for creation!"
+            }
+        }
+    }
+    catch
+    {
+        WriteToLog -Type "Failed" "Error in input"
+    }
+}
 function exitScript
 {
     Get-PSSession | Remove-PSSession
