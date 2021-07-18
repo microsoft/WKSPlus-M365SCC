@@ -171,6 +171,8 @@ if(!(Test-Path($logCSV))){
     recovery
     connectExo
     connectSCC
+    createLabel
+    createPolicy
 }
 
 #use variable to control phases
