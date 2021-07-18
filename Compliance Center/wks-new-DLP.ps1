@@ -4,6 +4,15 @@ $LogCSV = "C:\temp\LabelLog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
+#label
+$labelDisplayName = "WKS Highly Confidential"
+$labelName = "WKS-Highly-Confidential"
+$labelTooltip = "Contains Highly confidential info"
+$labelComment = "Documents with this label contain sensitive data."
+
+#label policy
+$labelPolicyName = "WKS-Highly-confidential-publish"
+
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
@@ -107,70 +116,45 @@ function connectSCC
     }
 }
 
-[Array]$DomainName = Get-AcceptedDomain
-
-$SuffixDomain = $DomainName[0].DomainName
-$Email = "Admin@$SuffixDomain"
-
-#### check for existing DLP Policy. ####
-
-if (Get-DlpCompliancePolicy -Identity "WKS-Credit Card Number")
+function createLabel
 {
- ##### DLP Policy Parameters. #####
-$params = @{
-    "Name" = "WKS-Credit Card Number-test";
-    "ExchangeLocation" ="All";
-    "OneDriveLocation" = "All";
-    "SharePointLocation" = "All";
-    "EndpointDlpLocation" = "all";
-    "Teamslocaltion" = "All";
-    "Mode" = "Enable"
+    <#
+    TO DO:
+    Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
+    #>
+    $domainName = (Get-AcceptedDomain | ?{$_.Default -eq $true}).DomainName
+    $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
+    Write-Host "Creating label with permissions: $Encpermission..."
+    try {
+        New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -SiteExternalSharingControlType "ExistingExternalUserSharingOnly" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
+    } catch {
+        logWrite 4 $false "Error creating label"
+        exit
     }
-    new-dlpcompliancepolicy @params
-
+    logWrite 4 $true "Successfully created label"
+    $global:nextPhase++
+    write-host "Sleeping for 30 seconds..."
+    Start-Sleep -Seconds 30
 }
 
-else 
+function createPolicy
 {
+        <#
+    TO DO:
+    - Need to check to see if label policy exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
+    - Need to make sure the labele exists
+    #>
 
-    Write-Host " DLP Policy already excist"
-}
-<##### DLP Policy Parameters. #####
-$params = @{
-    "Name" = "WKS-Credit Card Number-test02";
-    "ExchangeLocation" ="All";
-    "OneDriveLocation" = "All";
-    "SharePointLocation" = "All";
-    "EndpointDlpLocation" = "all";
-    "Teamslocaltion" = "All";
-    "Mode" = "Enable"
+    try {
+        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
+    } catch {
+        logWrite 5 $false "Error creating label policy"
+        exit
     }
-    new-dlpcompliancepolicy @params
-#>
+    logWrite 5 $true "Successfully created label policy"
+    $global:nextPhase++
+}
 
-
-    ###### sensitivity Types low Volume ############
-$SensitiveTypes = @( 
-    @{Name="Credit Card Number"; minCount="1"; maxcount="5"}    
-)
-
-    ###### sensitivity Types High Volume ############
-    $SensitiveTypesHigh = @( 
-        @{Name="Credit Card Number"; minCount="6";}    
-    )
-
-    Start-Sleep -Seconds 5
-    #### New DLP Rule Low and High volume. ######
-     New-DlpComplianceRule -Name "WKS-Credit Card Number-low" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser "lastmodifier"
-
-
-    New-DlpComplianceRule -Name "WKS-Credit Card Number-High" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email 
-
-
-    Stop-Transcript
-
-
-    
 function exitScript
 {
     Get-PSSession | Remove-PSSession
@@ -187,6 +171,8 @@ if(!(Test-Path($logCSV))){
     recovery
     connectExo
     connectSCC
+    createLabel
+    createPolicy
 }
 
 #use variable to control phases
