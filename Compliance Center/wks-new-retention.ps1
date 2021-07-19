@@ -127,6 +127,10 @@ function connectSCC
     }
 }
 
+# -------------------
+# Connect to Microsoft Online Service
+# -------------------
+
 function ConnectMsolService
 {
     try {
@@ -148,6 +152,10 @@ function ConnectMsolService
     }
 }
 
+# -------------------
+# Retrive all accepted Domains
+# -------------------
+
 Function getdomain
 {
     try{
@@ -164,7 +172,9 @@ Function getdomain
 
 }
 
-
+# ------------------------------
+# Create Sharepoint Online Site
+# ------------------------------
 function createSPOSite
 {
     param
@@ -182,12 +192,12 @@ function createSPOSite
    
   Try{
       #Connect to Office 365
-      Connect-PnPOnline -Url $AdminURL
+      Connect-SPOService -Url $AdminURL
     
       #Check if the site collection exists already
-      $SiteExists = Get-pnpSite | where {$_.url -eq $URL}
+      $SiteExists = Get-SPOSite | where {$_.url -eq $URL}
       #Check if site exists in the recycle bin
-      $SiteExistsInRecycleBin = Get-PnPTenantRecycleBinItem | where {$_.url -eq $URL}
+      $SiteExistsInRecycleBin = Get-SPODeletedSite | where {$_.url -eq $URL}
    
       If($SiteExists -ne $null)
       {
@@ -202,7 +212,7 @@ function createSPOSite
       else
       {
           #sharepoint online create site collection powershell
-          New-pnpSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -NoWait -ResourceQuota $ResourceQuota -Template $Template
+          New-SPOSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -NoWait -ResourceQuota $ResourceQuota -Template $Template
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   }
@@ -214,6 +224,9 @@ function createSPOSite
       $global:nextPhase++
 }
 
+# -------------------
+# Create Retention Policy
+# -------------------
 function NewRetentionPolicy
 {
     Try
@@ -260,6 +273,10 @@ Function CreateComplianceTag
     
 }
 
+# -------------------
+# Publish Compliance Tag
+# -------------------
+
 function RetentionTagPublish
 {
     try{
@@ -273,6 +290,14 @@ function RetentionTagPublish
     logWrite 10 $True "Able to Publish Retention Tag $global:name."
     $global:nextPhase++
 
+}
+
+Function Setlabel
+{
+
+    try{
+        Get-PnPSite -identity "$global:Sharepoint"
+    }
 }
 function exitScript
 {
