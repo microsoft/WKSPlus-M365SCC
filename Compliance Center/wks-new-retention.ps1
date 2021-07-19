@@ -4,7 +4,12 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
-$global:
+$global:name = "WKS-Compliance-Tag"
+$global:RetentionAction = "KeepAndDelete"
+$global:retentionduration = "3"
+$global:RetentionType = "ModificationAgeInDays"
+
+
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
@@ -177,12 +182,12 @@ function createSPOSite
    
   Try{
       #Connect to Office 365
-      Connect-SPOService -Url $AdminURL
+      Connect-PnPOnline -Url $AdminURL
     
       #Check if the site collection exists already
-      $SiteExists = Get-SPOSite | where {$_.url -eq $URL}
+      $SiteExists = Get-pnpSite | where {$_.url -eq $URL}
       #Check if site exists in the recycle bin
-      $SiteExistsInRecycleBin = Get-SPODeletedSite | where {$_.url -eq $URL}
+      $SiteExistsInRecycleBin = Get-PnPTenantRecycleBinItem | where {$_.url -eq $URL}
    
       If($SiteExists -ne $null)
       {
@@ -197,7 +202,7 @@ function createSPOSite
       else
       {
           #sharepoint online create site collection powershell
-          New-SPOSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -NoWait -ResourceQuota $ResourceQuota -Template $Template
+          New-pnpSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -NoWait -ResourceQuota $ResourceQuota -Template $Template
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   }
@@ -232,102 +237,48 @@ function NewRetentionPolicy
 # -------------------
 Function CreateComplianceTag
 {
-    Param(
-        # File path needed to check
-        [Parameter(Mandatory = $true)]
-        [String]$name = "wks-compliance-retention-Tag-3D"
+    try {
+        $tag = Get-compliancetag -Identity "$global:name"
 
-    )
-  try
-    {
-         # Retrieve existing compliance tags
-         $tags = InvokePowerShellCmdlet "Get-ComplianceTag"
-        foreach($lab in $labels)
+        If($tag -ne $null)
         {
-            # Cmdlet parameters
-
-            $name = [String]::Empty;
-            $cmdlet = 'New-ComplianceTag'
-            if ([String]::IsNullOrEmpty($lab.'Name (Required)'))
-            {
-                WriteToLog -Type "Failed" -Message "Could not acquire table for writing."
-                throw;
-            }
-            else
-            {
-                $name = $lab.'Name (Required)'
-                $cmdlet += " -Name '" + $name + "'"
-            }
-            if (![String]::IsNullOrEmpty($lab.'Comment (Optional)'))
-            {
-                $para = $lab.'Comment (Optional)'
-                $cmdlet += " -Comment '" + $para + "'"
-            }
-            if (![String]::IsNullOrEmpty($lab.'IsRecordLabel (Required)'))
-            {
-                $para = $lab.'IsRecordLabel (Required)'
-                $cmdlet += " -IsRecordLabel " + $para
-            }
-            if (![String]::IsNullOrEmpty($lab.'RetentionAction (Optional)'))
-            {
-                $para = $lab.'RetentionAction (Optional)'
-                $cmdlet += " -RetentionAction " + $para 
-            }
-            if (![String]::IsNullOrEmpty($lab.'RetentionDuration (Optional)'))
-            {
-                $para = $lab.'RetentionDuration (Optional)'
-                $cmdlet += " -RetentionDuration " + $para
-            }
-            if (![String]::IsNullOrEmpty($lab.'RetentionType (Optional)'))
-            {
-                $para = $lab.'RetentionType (Optional)'
-                $cmdlet += " -RetentionType " + $para
-            }
-            if (![String]::IsNullOrEmpty($lab.'ReviewerEmail (Optional)'))
-            {
-                $emails = $lab.'ReviewerEmail (Optional)'.Split(",") | ForEach-Object { $_.Trim() }
-                if (($emails -ne $null) -and ($emails.Count -ne 0))
-                {
-                    $eml = '@('
-                    foreach($email in $emails)
-                    {
-                        $eml += "'{0}'," -f $email
-                    }
-                    $eml = $eml.Substring(0, $eml.Length - 1) + ')'
-                    
-                    $cmdlet += " -ReviewerEmail " + $eml
-                }
-            }
-            # If the tag already exists, skip for creation
-            if (($tags -eq $null) -or ($tags | ? { $_.Name.ToLower() -eq $name.ToLower() }) -eq $null)
-            {
-                # Create compliance tag
-                $msg = "Execute Cmdlet : {0}" -f $cmdlet
-                
-                $ret = InvokePowerShellCmdlet $cmdlet
-            
-                if ($ret -eq $null)
-                {
-                    WriteToLog -Type "Failed" $error[0]
-                    break;
-                }
-            }
-            else
-            {
-                WriteToLog -Type "Warning" -Message "The tag '$name' already exists! Skip for creation!"
-            }
+            write-host "Site $($global:name) exists already!" -foregroundcolor red
+           
         }
+        else{
+            new-compliancetag -Name "$global:name" -RetentionType "$global:retentiontype" -RetentionDuration "$global:retentionduration" -RetentionAction "$global:RetentionAction"
+        }
+     }
+
+     catch {
+        logWrite 9 $false "unable to create Retention Tag"
+        exit
     }
-    catch
-    {
-        WriteToLog -Type "Failed" "Error in input"
+    logWrite 9 $True "Able to Create Retention Tag."
+    $global:nextPhase++
+        
+    
+}
+
+function RetentionTagPublish
+{
+    try{
+    New-RetentionComplianceRule -PublishComplianceTag "$global:name" 
+       }
+    
+       catch {
+        logWrite 10 $false "unable to Publish Retention Tag $global:name."
+        exit
     }
+    logWrite 10 $True "Able to Publish Retention Tag $global:name."
+    $global:nextPhase++
+
 }
 function exitScript
 {
     Get-PSSession | Remove-PSSession
     Disconnect-SPOService
-    logWrite 9 $true "Session removed successfully"
+    logWrite 11 $true "Session removed successfully"
 }
 
 ################ main Script start ###################
@@ -346,6 +297,8 @@ if(!(Test-Path($logCSV))){
     getdomain
     createSPOSite
     NewRetentionPolicy
+    CreateComplianceTag
+    RetentionTagPublish
 
     
 
@@ -390,5 +343,13 @@ if ($nextPhase -eq 8){
 }
 
 if ($nextPhase -eq 9){
+    CreateComplianceTag
+}
+
+if ($nextPhase -eq 10){
+    RetentionTagPublish
+}
+
+if ($nextPhase -eq 11){
 exitScript
 }
