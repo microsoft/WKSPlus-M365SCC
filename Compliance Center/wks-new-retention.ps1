@@ -4,7 +4,8 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
-$global:name = "WKS-Compliance-Tag"
+$global:name = "WKS-Compliance-Tag-01"
+$global:publish = "WKS-Compliance-Tag-Pub"
 $global:RetentionAction = "KeepAndDelete"
 $global:retentionduration = "3"
 $global:RetentionType = "ModificationAgeInDays"
@@ -181,7 +182,7 @@ function createSPOSite
       (
           [string]$Title  = "wks-compliance-center",
           [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center",
-          [string]$Owner = "admin@$global:Sharepoint.onmicrosoft.com, adm-jorg@pineview-school.com",
+          [string]$Owner = "adm-jorg@pineview-school.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
           [string]$Template = "STS#3"
@@ -194,11 +195,10 @@ function createSPOSite
       #Connect to Office 365
       Connect-PnPOnline -Url $AdminURL
     
-     #sharepoint online create site collection powershell
-          New-pnptenantSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone "10"
+             #sharepoint online create site collection powershell
+          New-PnPtenantSite -Url $URL -title $Title -Owner "adm-jorg@pineview-school.com" -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
-      
-  }
+      }
   catch {
           logWrite 7 $false "Unable to create the SharePoint Website."
           exit
@@ -206,7 +206,8 @@ function createSPOSite
       logWrite 7 $True "Able to create the SharePoint Website."
       $global:nextPhase++
 }
-start-sleep 30
+
+Start-Sleep 40
 # -------------------
 # Create Retention Policy
 # -------------------
@@ -216,10 +217,9 @@ function NewRetentionPolicy
     {
      
        #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true
-          start-sleep 30
-
-          New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-test" -RetentionDuration 3
+          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-jorg" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true
+          Start-Sleep 30
+          New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-jorg" -RetentionDuration 3
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
       
   }
@@ -230,23 +230,15 @@ function NewRetentionPolicy
       logWrite 8 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
-start-sleep 30
 # -------------------
 # Create Compliance Tag
 # -------------------
 Function CreateComplianceTag
 {
     try {
-        $tag = Get-compliancetag -Identity "$global:name"
 
-        If($tag -ne $null)
-        {
-            write-host "Site $($global:name) exists already!" -foregroundcolor red
-           
-        }
-        else{
-            new-compliancetag -Name "$global:name" -RetentionType "$global:retentiontype" -RetentionDuration "$global:retentionduration" -RetentionAction "$global:RetentionAction"
-        }
+        new-compliancetag -Name "$global:name" -RetentionType "$global:retentiontype" -RetentionDuration "$global:retentionduration" -RetentionAction "$global:RetentionAction"
+        
      }
 
      catch {
@@ -258,7 +250,7 @@ Function CreateComplianceTag
         
     
 }
-start-sleep 30
+
 # -------------------
 # Publish Compliance Tag
 # -------------------
@@ -266,7 +258,7 @@ start-sleep 30
 function RetentionTagPublish
 {
     try{
-    New-RetentionComplianceRule -PublishComplianceTag "$global:name" 
+        New-Compliancetag -PublishComplianceTag "$global:name" -Name "$global:publish" 
        }
     
        catch {
@@ -278,13 +270,13 @@ function RetentionTagPublish
 
 }
 
+
 function exitScript
 {
     Get-PSSession | Remove-PSSession
     Disconnect-PnPOnline
-    logWrite 11 $true "Session removed successfully"
+    logWrite 11 $true "Session removed successfully."
 }
-
 ################ main Script start ###################
 
 if(!(Test-Path($logCSV))){
