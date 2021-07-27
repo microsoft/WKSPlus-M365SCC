@@ -181,7 +181,7 @@ function createSPOSite
       (
           [string]$Title  = "wks-compliance-center",
           [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center",
-          [string]$Owner = "admin@$global:Sharepoint.onmicrosoft.com",
+          [string]$Owner = "admin@$global:Sharepoint.onmicrosoft.com, adm-jorg@pineview-school.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
           [string]$Template = "STS#3"
@@ -192,29 +192,12 @@ function createSPOSite
    
   Try{
       #Connect to Office 365
-      Connect-SPOService -Url $AdminURL
+      Connect-PnPOnline -Url $AdminURL
     
-      #Check if the site collection exists already
-      $SiteExists = Get-SPOSite | where {$_.url -eq $URL}
-      #Check if site exists in the recycle bin
-      $SiteExistsInRecycleBin = Get-SPODeletedSite | where {$_.url -eq $URL}
-   
-      If($SiteExists -ne $null)
-      {
-          write-host "Site $($url) exists already!" -foregroundcolor red
-         
-      }
-      elseIf($SiteExistsInRecycleBin -ne $null)
-      {
-          write-host "Site $($url) exists in the recycle bin!" -foregroundcolor red
-         
-      }
-      else
-      {
-          #sharepoint online create site collection powershell
-          New-SPOSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -NoWait -ResourceQuota $ResourceQuota -Template $Template
+     #sharepoint online create site collection powershell
+          New-pnptenantSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone "10"
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
-      }
+      
   }
   catch {
           logWrite 7 $false "Unable to create the SharePoint Website."
@@ -223,7 +206,7 @@ function createSPOSite
       logWrite 7 $True "Able to create the SharePoint Website."
       $global:nextPhase++
 }
-
+start-sleep 30
 # -------------------
 # Create Retention Policy
 # -------------------
@@ -233,7 +216,9 @@ function NewRetentionPolicy
     {
      
        #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true -workload
+          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-test" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true
+          start-sleep 30
+
           New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-test" -RetentionDuration 3
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
       
@@ -245,6 +230,7 @@ function NewRetentionPolicy
       logWrite 8 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
+start-sleep 30
 # -------------------
 # Create Compliance Tag
 # -------------------
@@ -272,7 +258,7 @@ Function CreateComplianceTag
         
     
 }
-
+start-sleep 30
 # -------------------
 # Publish Compliance Tag
 # -------------------
@@ -292,17 +278,10 @@ function RetentionTagPublish
 
 }
 
-Function Setlabel
-{
-
-    try{
-        Get-PnPSite -identity "$global:Sharepoint"
-    }
-}
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    Disconnect-SPOService
+    Disconnect-PnPOnline
     logWrite 11 $true "Session removed successfully"
 }
 
