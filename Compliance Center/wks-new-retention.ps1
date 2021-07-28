@@ -180,8 +180,8 @@ function createSPOSite
 {
     param
       (
-          [string]$Title  = "wks-compliance-center-test",
-          [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test",
+          [string]$Title  = "wks-compliance-center",
+          [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center",
           [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
