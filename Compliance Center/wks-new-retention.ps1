@@ -256,8 +256,8 @@ start-sleep 60
 function setlabelsposite
 {
     try{
-        connect-pnponline -url $AdminURL
-        Set-PnPLabel -List "Shared Documents" -Label $global:name
+        connect-pnponline -url $URL
+        Set-PnPLabel -List "Shared Documents" -Label $global:name -ErrorAction:Stop
     }
     catch {
         logWrite 10 $false "Unable to create the Retention Policy and Rule."
