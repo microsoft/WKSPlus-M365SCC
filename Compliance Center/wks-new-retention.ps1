@@ -181,7 +181,7 @@ function createSPOSite
     param
       (
           [string]$Title  = "wks-compliance-center",
-          [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center",
+          [string]$URL = "https://m365x888002.sharepoint.com/sites/DigitalInitiativePublicRelations",
           [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
@@ -226,8 +226,7 @@ Function CreateComplianceTag
     }
     logWrite 8 $True "Able to Create Retention Tag."
     $global:nextPhase++
-        
-    
+
 }
 
 
