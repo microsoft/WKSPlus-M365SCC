@@ -194,7 +194,7 @@ function createSPOSite
   Try{
       #Connect to Office 365
       Connect-sposervice -Url $AdminURL
-    
+          
              #sharepoint online create site collection powershell
           New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
@@ -251,13 +251,29 @@ function NewRetentionPolicy
       $global:nextPhase++
 }
 
+start-sleep 60
+
+function setlabelsposite
+{
+    try{
+        connect-pnponline -url $AdminURL
+        Set-PnPLabel -List "Shared Documents" -Label $global:name
+    }
+    catch {
+        logWrite 10 $false "Unable to create the Retention Policy and Rule."
+        exit
+    }
+    logWrite 10 $True "The Retention policy and rule has been created."
+    $global:nextPhase++
+}
 
 
 function exitScript
 {
     Get-PSSession | Remove-PSSession
     Disconnect-PnPOnline
-    logWrite 10 $true "Session removed successfully."
+    disconnect-sposervice
+    logWrite 11 $true "Session removed successfully."
 }
 ################ main Script start ###################
 
@@ -276,6 +292,7 @@ if(!(Test-Path($logCSV))){
     createSPOSite
     CreateComplianceTag
     NewRetentionPolicy
+    setlabelsposite
 }
 
 #use variable to control phases
@@ -309,17 +326,21 @@ getdomain
 }
 
 if($nextPhase -eq 7){
-    createSPOSite
+createSPOSite
 }
 
 if ($nextPhase -eq 8){
-    CreateComplianceTag
+CreateComplianceTag
 }
 
 if ($nextPhase -eq 9){
-    NewRetentionPolicy
+NewRetentionPolicy
 }
 
 if ($nextPhase -eq 10){
+setlabelsposite
+}
+
+if ($nextPhase -eq 11){
 exitScript
 }
