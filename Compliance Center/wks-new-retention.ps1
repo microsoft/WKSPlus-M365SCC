@@ -253,10 +253,11 @@ function NewRetentionPolicy
       $global:nextPhase++
 }
 
-start-sleep 120
+
 
 function setlabelsposite
 {
+    start-sleep 180
     try{
         connect-pnponline -url $URL -UseWebLogin
         Set-PnPLabel -List "Shared Documents" -Label $global:name
