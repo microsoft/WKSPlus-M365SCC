@@ -5,7 +5,7 @@ $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
 $global:name = "WKS-Compliance-Tag"
-$global:Policy = "WKS-Compliance-Rule"
+$global:Policy = "WKS-Compliance-policy"
 $global:RetentionAction = "KeepAndDelete"
 $global:retentionduration = "3"
 $global:RetentionType = "ModificationAgeInDays"
@@ -180,9 +180,9 @@ function createSPOSite
 {
     param
       (
-          [string]$Title  = "wks-compliance-center",
-          [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center",
-          [string]$Owner = "adm-jorg@pineview-school.com",
+          [string]$Title  = "wks-compliance-center-test",
+          [string]$URL = "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test",
+          [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
           [string]$Template = "STS#3"
@@ -196,7 +196,7 @@ function createSPOSite
       Connect-PnPOnline -Url $AdminURL
     
              #sharepoint online create site collection powershell
-          New-PnPtenantSite -Url $URL -title $Title -Owner "adm-jorg@pineview-school.com" -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
+          New-PnPtenantSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   catch {
