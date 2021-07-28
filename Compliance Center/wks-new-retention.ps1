@@ -193,10 +193,10 @@ function createSPOSite
    
   Try{
       #Connect to Office 365
-      Connect-PnPOnline -Url $AdminURL
+      Connect-sposervice -Url $AdminURL
     
              #sharepoint online create site collection powershell
-          New-PnPtenantSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
+          New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   catch {
@@ -250,6 +250,8 @@ function NewRetentionPolicy
       logWrite 9 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
+
+
 
 function exitScript
 {
