@@ -4,8 +4,8 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
-$global:name = "WKS-Compliance-Tag-01"
-$global:publish = "WKS-Compliance-Tag-Pub"
+$global:name = "WKS-Compliance-Tag"
+$global:Policy = "WKS-Compliance-Rule"
 $global:RetentionAction = "KeepAndDelete"
 $global:retentionduration = "3"
 $global:RetentionType = "ModificationAgeInDays"
@@ -207,7 +207,28 @@ function createSPOSite
       $global:nextPhase++
 }
 
-Start-Sleep 40
+# -------------------
+# Create Compliance Tag
+# -------------------
+Function CreateComplianceTag
+{
+    try {
+
+        new-ComplianceTag -Name "$global:name" -Comment 'Keep and delete tag - 3 Days' -IsRecordLabel $false -RetentionAction "$global:retentionaction" -RetentionDuration "$global:retentionduration" -RetentionType ModificationAgeInDays
+        
+     }
+
+     catch {
+        logWrite 8 $false "unable to create Retention Tag"
+        exit
+    }
+    logWrite 8 $True "Able to Create Retention Tag."
+    $global:nextPhase++
+        
+    
+}
+
+
 # -------------------
 # Create Retention Policy
 # -------------------
@@ -217,65 +238,24 @@ function NewRetentionPolicy
     {
      
        #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "WKS-Compliance-Retention-SPO-3D-jorg" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true
-          Start-Sleep 30
-          New-RetentionComplianceRule -Name "WKS-Compliance-Retention-SPO-Rule-3D" -Policy "WKS-Compliance-Retention-SPO-3D-jorg" -RetentionDuration 3
+          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
+          New-RetentionComplianceRule -Policy "$global:Policy" -publishComplianceTag "$global:name"
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
       
   }
   catch {
-          logWrite 8 $false "Unable to create the Retention Policy and Rule."
+          logWrite 9 $false "Unable to create the Retention Policy and Rule."
           exit
       }
-      logWrite 8 $True "The Retention policy and rule has been created."
+      logWrite 9 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
-# -------------------
-# Create Compliance Tag
-# -------------------
-Function CreateComplianceTag
-{
-    try {
-
-        new-compliancetag -Name "$global:name" -RetentionType "$global:retentiontype" -RetentionDuration "$global:retentionduration" -RetentionAction "$global:RetentionAction"
-        
-     }
-
-     catch {
-        logWrite 9 $false "unable to create Retention Tag"
-        exit
-    }
-    logWrite 9 $True "Able to Create Retention Tag."
-    $global:nextPhase++
-        
-    
-}
-
-# -------------------
-# Publish Compliance Tag
-# -------------------
-
-function RetentionTagPublish
-{
-    try{
-        New-Compliancetag -PublishComplianceTag "$global:name" -Name "$global:publish" 
-       }
-    
-       catch {
-        logWrite 10 $false "unable to Publish Retention Tag $global:name."
-        exit
-    }
-    logWrite 10 $True "Able to Publish Retention Tag $global:name."
-    $global:nextPhase++
-
-}
-
 
 function exitScript
 {
     Get-PSSession | Remove-PSSession
     Disconnect-PnPOnline
-    logWrite 11 $true "Session removed successfully."
+    logWrite 10 $true "Session removed successfully."
 }
 ################ main Script start ###################
 
@@ -292,12 +272,8 @@ if(!(Test-Path($logCSV))){
     ConnectMsolService
     getdomain
     createSPOSite
-    NewRetentionPolicy
     CreateComplianceTag
-    RetentionTagPublish
-
-    
-
+    NewRetentionPolicy
 }
 
 #use variable to control phases
@@ -335,17 +311,13 @@ if($nextPhase -eq 7){
 }
 
 if ($nextPhase -eq 8){
-    NewRetentionPolicy
-}
-
-if ($nextPhase -eq 9){
     CreateComplianceTag
 }
 
-if ($nextPhase -eq 10){
-    RetentionTagPublish
+if ($nextPhase -eq 9){
+    NewRetentionPolicy
 }
 
-if ($nextPhase -eq 11){
+if ($nextPhase -eq 10){
 exitScript
 }
