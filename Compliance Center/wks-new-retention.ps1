@@ -194,9 +194,10 @@ function createSPOSite
   Try{
       #Connect to Office 365
       Connect-sposervice -Url $AdminURL
-          
+      write-host "Site Collection $($url) Already exists!" -foregroundcolor red
+
              #sharepoint online create site collection powershell
-          New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template -timezone 10
+          New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   catch {
@@ -213,7 +214,8 @@ function createSPOSite
 Function CreateComplianceTag
 {
     try {
-
+        get-compliancetag -Identity "$global:name" 
+        Write-Host "The Compliance Tag already Exists!" -ForegroundColor red
         new-ComplianceTag -Name "$global:name" -Comment 'Keep and delete tag - 3 Days' -IsRecordLabel $false -RetentionAction "$global:retentionaction" -RetentionDuration "$global:retentionduration" -RetentionType ModificationAgeInDays
         
      }
@@ -251,12 +253,12 @@ function NewRetentionPolicy
       $global:nextPhase++
 }
 
-start-sleep 60
+start-sleep 120
 
 function setlabelsposite
 {
     try{
-        connect-pnponline -url $URL
+        connect-pnponline -url $URL -UseWebLogin
         Set-PnPLabel -List "Shared Documents" -Label $global:name
     }
     catch {
