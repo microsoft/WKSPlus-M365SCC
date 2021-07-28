@@ -257,13 +257,13 @@ function setlabelsposite
 {
     try{
         connect-pnponline -url $URL
-        Set-PnPLabel -List "Shared Documents" -Label $global:name -ErrorAction:Stop
+        Set-PnPLabel -List "Shared Documents" -Label $global:name
     }
     catch {
-        logWrite 10 $false "Unable to create the Retention Policy and Rule."
+        logWrite 10 $false "Unable to set the Retention label to $url."
         exit
     }
-    logWrite 10 $True "The Retention policy and rule has been created."
+    logWrite 10 $True "Able to set the Retention label to $url."
     $global:nextPhase++
 }
 
