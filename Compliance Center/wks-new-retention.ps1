@@ -257,10 +257,11 @@ function NewRetentionPolicy
 
 function setlabelsposite
 {
-    start-sleep 180
+    
     try{
         connect-pnponline -url $URL -UseWebLogin
-        Set-PnPLabel -List "Shared Documents" -Label $global:name
+        start-sleep 240
+        Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
     }
     catch {
         logWrite 10 $false "Unable to set the Retention label to $url."
