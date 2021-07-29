@@ -1,19 +1,9 @@
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\LabelLog.csv"
+$LogCSV = "C:\temp\DLPLog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
-
-#label
-$labelDisplayName = "WKS Highly Confidential"
-$labelName = "WKS-Highly-Confidential"
-$labelTooltip = "Contains Highly confidential info"
-$labelComment = "Documents with this label contain sensitive data."
-
-#label policy
-$labelPolicyName = "WKS-Highly-confidential-publish"
-
-################ Functions ###################
+############### Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
     if ($result)
@@ -116,49 +106,94 @@ function connectSCC
     }
 }
 
-function createLabel
+
+function getdomain
 {
-    <#
-    TO DO:
-    Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
-    #>
-    $domainName = (Get-AcceptedDomain | ?{$_.Default -eq $true}).DomainName
-    $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
-    Write-Host "Creating label with permissions: $Encpermission..."
-    try {
-        New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -SiteExternalSharingControlType "ExistingExternalUserSharingOnly" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
-    } catch {
-        logWrite 4 $false "Error creating label"
+    try{
+        [Array]$DomainName = Get-AcceptedDomain
+        $SuffixDomain = $DomainName[0]
+    }
+    catch {
+        logWrite 4 $false "Not able to get all Accepted Domains.  Exiting."
         exit
     }
-    logWrite 4 $true "Successfully created label"
-    $global:nextPhase++
-    write-host "Sleeping for 30 seconds..."
-    Start-Sleep -Seconds 30
+        if($global:recovery -eq $false){
+        logWrite 4 $true "Successfully collected all Accepted Domains."
+        $global:nextPhase++
+        }
 }
 
-function createPolicy
+function createDPLPolicy
 {
-        <#
-    TO DO:
-    - Need to check to see if label policy exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
-    - Need to make sure the labele exists
-    #>
+    
+    Try{
+        $params = @{
+            "Name" = "WKS-Credit Card Number";
+            "ExchangeLocation" ="All";
+            "OneDriveLocation" = "All";
+            "SharePointLocation" = "All";
+            "EndpointDlpLocation" = "all";
+            "Mode" = "Enable"
+            }
+            new-dlpcompliancepolicy @params
+        }
+        catch {
+            logWrite 5 $false "Not able to Create DLP Policy.  Exiting."
+            exit
+        }
+            if($global:recovery -eq $false){
+            logWrite 5 $true "Successfully created the DLP Policy."
+            $global:nextPhase++
+            }
+}
 
-    try {
-        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
-    } catch {
-        logWrite 5 $false "Error creating label policy"
+function SensitiveTypes
+{
+    try{
+        $SensitiveTypes = @( 
+            @{Name="Credit Card Number"; minCount="1"; maxcount="5"}    
+            )
+    
+        
+            $SensitiveTypesHigh = @( 
+            @{Name="Credit Card Number"; minCount="6";}    
+            )   
+    }
+    catch {
+        logWrite 6 $false "Unable to set Sensitivity Types.  Exiting."
+        exit
+     }
+        if($global:recovery -eq $false){
+        logWrite 6 $true "Successfully set sensitivity Types"
+        $global:nextPhase++
+        }
+
+}
+
+function DLPCompliancerule
+{
+    try{
+    Start-Sleep -Seconds 5
+    
+     New-DlpComplianceRule -Name "WKS-Credit Card Number-low" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser "lastmodifier"
+
+
+    New-DlpComplianceRule -Name "WKS-Credit Card Number-High" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email 
+    }
+        catch {
+        logWrite 7 $false "Unable to create DLP Rules.  Exiting."
         exit
     }
-    logWrite 5 $true "Successfully created label policy"
-    $global:nextPhase++
+        if($global:recovery -eq $false){
+        logWrite 7 $true "Successfully created DLP Rules"
+        $global:nextPhase++
+        }
+    
 }
-
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully."
+    logWrite 8 $true "Session removed successfully."
 }
 
 ################ main Script start ###################
@@ -171,9 +206,11 @@ if(!(Test-Path($logCSV))){
     recovery
     connectExo
     connectSCC
-    createLabel
-    createPolicy
-}
+    getdomain
+    createDPLPolicy
+    SensitiveTypes
+    DLPCompliancerule
+    }
 
 #use variable to control phases
 
@@ -190,13 +227,21 @@ connectSCC
 }
 
 if($nextPhase -eq 4){
-createLabel
+getdomain
 }
 
-if ($nextPhase -eq 5){
-createPolicy
+if($nextPhase -eq 5){
+createDPLPolicy
 }
 
-if ($nextPhase -eq 6){
+if($nextPhase -eq 6){
+SensitiveTypes
+}
+
+if($nextPhase -eq 7){
+DLPCompliancerule
+}
+
+if ($nextPhase -eq 8){
 exitScript
 }
