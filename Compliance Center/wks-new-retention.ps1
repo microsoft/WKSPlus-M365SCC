@@ -194,14 +194,23 @@ function createSPOSite
   Try{
       #Connect to Office 365
       Connect-sposervice -Url $AdminURL
-      write-host "Site Collection $($url) Already exists!" -foregroundcolor red
+     
+       #Check if the site collection exists already
+    $SiteExists = Get-SPOSite | where {$_.url -eq $URL}
 
-             #sharepoint online create site collection powershell
+      If($SiteExists -ne $null)
+      {
+          write-host "Site $($url) exists already!" -foregroundcolor red
+      }
+      #sharepoint online create site collection powershell
+      else {
+         
           New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
-      }
+          }
+  }
   catch {
-          logWrite 7 $false "Unable to create the SharePoint Website."
+          logWrite 7 $false "Error: $($_.Exception.Message)"
           exit
       }
       logWrite 7 $True "Able to create the SharePoint Website."
@@ -261,7 +270,7 @@ function setlabelsposite
         connect-pnponline -url $URL -UseWebLogin
         start-sleep 240
         Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
-        Set-PnPSite -Classification "WKS Highly Confidential"
+        
     }
     catch {
         logWrite 10 $false "Unable to set the Retention label to $url."
