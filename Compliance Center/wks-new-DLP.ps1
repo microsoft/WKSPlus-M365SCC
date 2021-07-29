@@ -125,14 +125,15 @@ function getdomain
 
 function createDPLPolicy
 {
-    
     Try{
+        
         $params = @{
             "Name" = "WKS-Credit Card Number";
             "ExchangeLocation" ="All";
             "OneDriveLocation" = "All";
             "SharePointLocation" = "All";
             "EndpointDlpLocation" = "all";
+            "TeamsLocation" = "All";
             "Mode" = "Enable"
             }
             new-dlpcompliancepolicy @params
@@ -151,12 +152,12 @@ function SensitiveTypes
 {
     try{
         $SensitiveTypes = @( 
-            @{Name="Credit Card Number"; minCount="1"; maxcount="5"}    
+            @{Name="Credit Card Number"; minCount="1"; maxcount="3"}    
             )
     
         
             $SensitiveTypesHigh = @( 
-            @{Name="Credit Card Number"; minCount="6";}    
+            @{Name="Credit Card Number"; minCount="4";}    
             )   
     }
     catch {
@@ -178,7 +179,7 @@ function DLPCompliancerule
      New-DlpComplianceRule -Name "WKS-Credit Card Number-low" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypes -NotifyUser "lastmodifier"
 
 
-    New-DlpComplianceRule -Name "WKS-Credit Card Number-High" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email 
+    New-DlpComplianceRule -Name "WKS-Credit Card Number-High" -Policy "WKS-Credit Card Number" -ContentContainsSensitiveInformation $SensitiveTypesHigh -NotifyUser "LastModifier","owner" -blockaccess:$true -BlockAccessScope "All" -GenerateIncidentReport $email -ReportSeverityLevel "high" -GenerateIncidentReport $true
     }
         catch {
         logWrite 7 $false "Unable to create DLP Rules.  Exiting."
