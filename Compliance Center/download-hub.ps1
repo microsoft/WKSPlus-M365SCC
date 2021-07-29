@@ -1,6 +1,6 @@
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\LabelLog.csv"
+$LogCSV = "C:\temp\download.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
@@ -57,21 +57,49 @@ function downloadscriptlabel
 {
 
 Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\new-label.ps1; .\new-label.ps1 
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\new-label.ps1
 }
 catch {
     logWrite 1 $false "Unable to download the Script! Exiting."
     exit
 }
-logWrite 1 $True "ExchangeOnlineManagement module is installed."
+logWrite 1 $True "The Script has been downloaded ."
 $global:nextPhase++
 }
 
 
+function downloadscriptDLP
+{
+
+Try{
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1
+}
+catch {
+    logWrite 2 $false "Unable to download the Script! Exiting."
+    exit
+}
+logWrite 2 $True "The Script has been downloaded ."
+$global:nextPhase++
+}
+
+function downloadscriptRetention
+{
+
+    try{
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1
+    }
+    catch {
+        logWrite 3 $false "Unable to download the Script! Exiting."
+        exit
+    }
+    logWrite 3 $True "The Script has been downloaded ."
+    $global:nextPhase++
+}
+
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully."
+    logWrite 4 $true "Session removed successfully."
 }
 
 ################ main Script start ###################
@@ -83,6 +111,8 @@ if(!(Test-Path($logCSV))){
     # if log already exists, check if we need to recover
     recovery
     downloadscriptlabel
+    downloadscriptDLP
+    downloadscriptRetention
     exitScript
 }
 
@@ -92,6 +122,13 @@ if($nextPhase -eq 1){
 downloadscriptlabel
 }
 
-if ($nextPhase -eq 6){
+if($nextPhase -eq 2){
+downloadscriptDLP
+}
+if($nextPhase -eq 3){
+downloadscriptRetention
+}
+
+if ($nextPhase -eq 4){
 exitScript
 }
