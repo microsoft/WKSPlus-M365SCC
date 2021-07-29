@@ -181,7 +181,7 @@ function createSPOSite
     param
       (
           [string]$Title  = "wks-compliance-center",
-          [string]$URL = "https://m365x888002.sharepoint.com/sites/DigitalInitiativePublicRelations",
+          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center",
           [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
@@ -261,6 +261,7 @@ function setlabelsposite
         connect-pnponline -url $URL -UseWebLogin
         start-sleep 240
         Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
+        Set-PnPSite -Classification "WKS Highly Confidential"
     }
     catch {
         logWrite 10 $false "Unable to set the Retention label to $url."

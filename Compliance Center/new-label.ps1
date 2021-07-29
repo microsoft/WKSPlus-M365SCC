@@ -146,7 +146,7 @@ function createPolicy
     #>
 
     try {
-        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
+        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop
     } catch {
         logWrite 5 $false "Error creating label policy"
         exit
@@ -172,6 +172,9 @@ if(!(Test-Path($logCSV))){
     recovery
     connectExo
     connectSCC
+    createLabel
+    createPolicy
+    exitScript
 }
 
 #use variable to control phases
