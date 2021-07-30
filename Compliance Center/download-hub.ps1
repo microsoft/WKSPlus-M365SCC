@@ -103,6 +103,7 @@ function exitScript
 }
 
 ################ main Script start ###################
+cd C:\temp\
 
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
