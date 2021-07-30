@@ -57,7 +57,7 @@ function downloadscriptlabel
 {
 
 Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\new-label.ps1; .\new-label.ps1
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\wks-new-label.ps1
 }
 catch {
     logWrite 1 $false "Unable to download the Script! Exiting."
@@ -72,7 +72,7 @@ function downloadscriptDLP
 {
 
 Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1; .\wks-new-dlp.ps1
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1
 }
 catch {
     logWrite 2 $false "Unable to download the Script! Exiting."
@@ -86,7 +86,7 @@ function downloadscriptRetention
 {
 
     try{
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1; .\wks-new-retention.ps1
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1
     }
     catch {
         logWrite 3 $false "Unable to download the Script! Exiting."
@@ -96,9 +96,25 @@ function downloadscriptRetention
     $global:nextPhase++
 }
 
+function runLabelScript
+{
+    .\wks-new-label.ps1
+}
+
+function runDlpScript
+{
+
+}
+
+function runRetentionScript
+{
+    ./wks-new-retention.ps1
+}
+
 function exitScript
 {
-    Get-PSSession | Remove-PSSession
+    #remove psession if fails only
+    #Get-PSSession | Remove-PSSession
     logWrite 4 $true "Session removed successfully."
 }
 
@@ -121,13 +137,16 @@ if(!(Test-Path($logCSV))){
 
 if($nextPhase -eq 1){
 downloadscriptlabel
+runLabelScript
 }
 
 if($nextPhase -eq 2){
 downloadscriptDLP
+runDlpScript
 }
 if($nextPhase -eq 3){
 downloadscriptRetention
+runRetentionScript
 }
 
 if ($nextPhase -eq 4){
