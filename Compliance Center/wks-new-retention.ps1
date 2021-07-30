@@ -180,7 +180,7 @@ function createSPOSite
 {
     param
       (
-          [string]$Title  = "wks-compliance-center",
+          [string]$Title  = "wks-compliance-center-test-jorg-01",
           [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg-01",
           [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
@@ -258,7 +258,7 @@ function setlabelsposite
 {
   start-sleep 240
     try{
-        connect-pnponline -url $URL
+        connect-pnponline -url "https://M365x576146.sharepoint.com/sites/wks-compliance-center-test-jorg-01"
         
         Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
     }
