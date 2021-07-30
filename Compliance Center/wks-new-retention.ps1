@@ -4,8 +4,8 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
-$global:name = "WKS-Compliance-Tag"
-$global:Policy = "WKS-Compliance-policy"
+$global:name = "WKS-Compliance-Tag-test-jorg"
+$global:Policy = "WKS-Compliance-policy-test-jorg"
 $global:RetentionAction = "KeepAndDelete"
 $global:retentionduration = "3"
 $global:RetentionType = "ModificationAgeInDays"
@@ -181,7 +181,7 @@ function createSPOSite
     param
       (
           [string]$Title  = "wks-compliance-center",
-          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center",
+          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg",
           [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
@@ -194,23 +194,14 @@ function createSPOSite
   Try{
       #Connect to Office 365
       Connect-sposervice -Url $AdminURL
-     
-       #Check if the site collection exists already
-    $SiteExists = Get-SPOSite | where {$_.url -eq $URL}
+      
 
-      If($SiteExists -ne $null)
-      {
-          write-host "Site $($url) exists already!" -foregroundcolor red
-      }
-      #sharepoint online create site collection powershell
-      else {
-         
+             #sharepoint online create site collection powershell
           New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template
           write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
-          }
-  }
+      }
   catch {
-          logWrite 7 $false "Error: $($_.Exception.Message)"
+          logWrite 7 $false "Unable to create the SharePoint Website."
           exit
       }
       logWrite 7 $True "Able to create the SharePoint Website."
@@ -248,7 +239,7 @@ function NewRetentionPolicy
     {
      
        #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
+          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test-jorg" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
           New-RetentionComplianceRule -Policy "$global:Policy" -publishComplianceTag "$global:name"
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
       
@@ -265,18 +256,17 @@ function NewRetentionPolicy
 
 function setlabelsposite
 {
-    
+  start-sleep 240
     try{
         connect-pnponline -url $URL -UseWebLogin
-        start-sleep 240
-        Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
         
+        Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
     }
     catch {
-        logWrite 10 $false "Unable to set the Retention label to $url."
+        logWrite 10 $false "Unable to set the Retention label to $URL."
         exit
     }
-    logWrite 10 $True "Able to set the Retention label to $url."
+    logWrite 10 $True "Able to set the Retention label to $URL."
     $global:nextPhase++
 }
 
