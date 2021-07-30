@@ -57,7 +57,7 @@ function downloadscriptlabel
 {
 
 Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\new-label.ps1
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\new-label.ps1; .\new-label.ps1
 }
 catch {
     logWrite 1 $false "Unable to download the Script! Exiting."
@@ -72,7 +72,7 @@ function downloadscriptDLP
 {
 
 Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1; .\wks-new-dlp.ps1
 }
 catch {
     logWrite 2 $false "Unable to download the Script! Exiting."
@@ -86,7 +86,7 @@ function downloadscriptRetention
 {
 
     try{
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1; .\wks-new-retention.ps1
     }
     catch {
         logWrite 3 $false "Unable to download the Script! Exiting."
