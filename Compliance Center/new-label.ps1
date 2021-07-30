@@ -133,9 +133,14 @@ function createLabel
     }
     logWrite 4 $true "Successfully created label"
     $global:nextPhase++
-    write-host "Sleeping for 30 seconds..."
-    Start-Sleep -Seconds 30
-}
+
+    #sleeping for 30 seconds
+    for ($i = 1; $i -le 30; $i++ )
+    {
+        $p = ([Math]::Round($i/30, 2) * 100)
+        Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
+        Start-Sleep -Seconds 1
+    }
 
 function createPolicy
 {
@@ -197,6 +202,6 @@ if ($nextPhase -eq 5){
 createPolicy
 }
 
-if ($nextPhase -eq 6){
+if ($nextPhase -ge 6){
 ./wks-new-retention.ps1
 }

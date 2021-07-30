@@ -197,8 +197,8 @@ function createSPOSite
       
 
              #sharepoint online create site collection powershell
-          New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template
-          write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
+          $spoSiteCreationStatus = New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template | Out-Null
+          #write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   catch {
           logWrite 7 $false "Unable to create the SharePoint Website."
@@ -214,9 +214,9 @@ function createSPOSite
 Function CreateComplianceTag
 {
     try {
-        get-compliancetag -Identity "$global:name" 
-        Write-Host "The Compliance Tag already Exists!" -ForegroundColor red
-        new-ComplianceTag -Name "$global:name" -Comment 'Keep and delete tag - 3 Days' -IsRecordLabel $false -RetentionAction "$global:retentionaction" -RetentionDuration "$global:retentionduration" -RetentionType ModificationAgeInDays
+        #get-compliancetag -Identity "$global:name" 
+        #Write-Host "The Compliance Tag already Exists!" -ForegroundColor red
+        complianceTagStatus = new-ComplianceTag -Name "$global:name" -Comment 'Keep and delete tag - 3 Days' -IsRecordLabel $false -RetentionAction "$global:retentionaction" -RetentionDuration "$global:retentionduration" -RetentionType ModificationAgeInDays | Out-Null
         
      }
 
@@ -256,7 +256,13 @@ function NewRetentionPolicy
 
 function setlabelsposite
 {
-  start-sleep 240
+    #sleep for 240 seconds
+    for ($i = 1; $i -le 240; $i++ )
+    {
+        $p = ([Math]::Round($i/240, 2) * 100)
+        Write-Progress -Activity "Waiting for label to sync to SharePoint" -Status "$p% Complete:" -PercentComplete $p
+        Start-Sleep -Seconds 1
+    }
     try{
         connect-pnponline -url "https://M365x576146.sharepoint.com/sites/wks-compliance-center-test-jorg-01"
         

@@ -131,6 +131,6 @@ if($nextPhase -eq 3){
     downloadscriptRetention
 }
 
-if ($nextPhase -eq 4){
+if ($nextPhase -ge 4){
     ./wks-new-label.ps1
 }
