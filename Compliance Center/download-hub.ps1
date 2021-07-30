@@ -96,21 +96,6 @@ function downloadscriptRetention
     $global:nextPhase++
 }
 
-function runLabelScript
-{
-    .\wks-new-label.ps1
-}
-
-function runDlpScript
-{
-
-}
-
-function runRetentionScript
-{
-    ./wks-new-retention.ps1
-}
-
 function exitScript
 {
     #remove psession if fails only
@@ -136,19 +121,16 @@ if(!(Test-Path($logCSV))){
 #use variable to control phases
 
 if($nextPhase -eq 1){
-downloadscriptlabel
-runLabelScript
+    downloadscriptlabel
 }
 
 if($nextPhase -eq 2){
-downloadscriptDLP
-runDlpScript
+    downloadscriptDLP
 }
 if($nextPhase -eq 3){
-downloadscriptRetention
-runRetentionScript
+    downloadscriptRetention
 }
 
 if ($nextPhase -eq 4){
-exitScript
+    ./wks-new-label.ps1
 }

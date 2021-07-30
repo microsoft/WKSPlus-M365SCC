@@ -157,7 +157,7 @@ function createPolicy
 
 function exitScript
 {
-    Get-PSSession | Remove-PSSession
+    #Get-PSSession | Remove-PSSession
     logWrite 6 $true "Session removed successfully."
 }
 
@@ -198,5 +198,5 @@ createPolicy
 }
 
 if ($nextPhase -eq 6){
-exitScript
+./wks-new-retention.ps1
 }
