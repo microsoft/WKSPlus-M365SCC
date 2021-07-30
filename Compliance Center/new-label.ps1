@@ -126,7 +126,7 @@ function createLabel
     $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
     Write-Host "Creating label with permissions: $Encpermission..."
     try {
-        New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
+        New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -SiteExternalSharingControlType "ExistingExternalUserSharingOnly" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
     } catch {
         logWrite 4 $false "Error creating label"
         exit
@@ -146,7 +146,7 @@ function createPolicy
     #>
 
     try {
-        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop
+        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
     } catch {
         logWrite 5 $false "Error creating label policy"
         exit
@@ -154,7 +154,6 @@ function createPolicy
     logWrite 5 $true "Successfully created label policy"
     $global:nextPhase++
 }
-
 
 function exitScript
 {
@@ -174,7 +173,6 @@ if(!(Test-Path($logCSV))){
     connectSCC
     createLabel
     createPolicy
-    exitScript
 }
 
 #use variable to control phases

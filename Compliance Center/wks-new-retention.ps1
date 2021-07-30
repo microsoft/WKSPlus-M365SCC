@@ -4,8 +4,8 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 $global:Sharepoint = ""
-$global:name = "WKS-Compliance-Tag-test-jorg"
-$global:Policy = "WKS-Compliance-policy-test-jorg"
+$global:name = "WKS-Compliance-Tag-test-jorg-01"
+$global:Policy = "WKS-Compliance-policy-test-jorg-01"
 $global:RetentionAction = "KeepAndDelete"
 $global:retentionduration = "3"
 $global:RetentionType = "ModificationAgeInDays"
@@ -181,7 +181,7 @@ function createSPOSite
     param
       (
           [string]$Title  = "wks-compliance-center",
-          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg",
+          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg-01",
           [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
@@ -239,7 +239,7 @@ function NewRetentionPolicy
     {
      
        #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test-jorg" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
+          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test-jorg-01" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
           New-RetentionComplianceRule -Policy "$global:Policy" -publishComplianceTag "$global:name"
           write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
       
@@ -258,7 +258,7 @@ function setlabelsposite
 {
   start-sleep 240
     try{
-        connect-pnponline -url $URL -UseWebLogin
+        connect-pnponline -url $URL
         
         Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
     }
