@@ -308,7 +308,7 @@ if($nextPhase -eq 1){
 checkModule
 }
 
-if($nextPhase -eq2){
+if($nextPhase -eq 2){
 checkModuleMSOL    
 }
 
