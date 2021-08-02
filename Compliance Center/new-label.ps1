@@ -50,7 +50,7 @@ function recovery
     if ($lastEntryResult -eq $false){
         if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase){
             WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  PLease check with your instructor."
-            exit
+            exitScript
         } else {
             Write-Host "There was a problem with Phase $lastEntryPhase, so trying again...."
             $global:nextPhase = $lastEntryPhase
@@ -68,7 +68,7 @@ function checkModule
         Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null
     } catch {
         logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
-        exit
+        exitScript
     }
     logWrite 1 $True "ExchangeOnlineManagement module is installed."
     $global:nextPhase++
@@ -86,7 +86,7 @@ function connectExo
             Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
         } catch {
             logWrite 2 $false "Couldn't connect to Exchange Online.  Exiting."
-            exit
+            exitScript
         }
         if($global:recovery -eq $false){
             logWrite 2 $true "Successfully connected to Exchange Online"
@@ -107,7 +107,7 @@ function connectSCC
             Get-Command Set-Label -ErrorAction:Stop | Out-Null
         } catch {
             logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
-            exit
+            exitScript
         }
         if($global:recovery -eq $false){
             logWrite 3 $true "Successfully connected to Compliance Center"
@@ -129,7 +129,7 @@ function createLabel
         $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
     } catch {
         logWrite 4 $false "Error creating label"
-        exit
+        exitScript
     }
     logWrite 4 $true "Successfully created label"
     $global:nextPhase++
@@ -154,7 +154,7 @@ function createPolicy
         New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
     } catch {
         logWrite 5 $false "Error creating label policy"
-        exit
+        exitScript
     }
     logWrite 5 $true "Successfully created label policy"
     $global:nextPhase++
@@ -162,8 +162,9 @@ function createPolicy
 
 function exitScript
 {
-    #Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully."
+    #remove psession if fails only
+    Get-PSSession | Remove-PSSession
+    exit
 }
 
 ################ main Script start ###################
@@ -203,5 +204,6 @@ createPolicy
 }
 
 if ($nextPhase -ge 6){
-./wks-new-retention.ps1
+    $nextScript = $LogPath + "./wks-new-retention.ps1"
+    .$nextScript
 }

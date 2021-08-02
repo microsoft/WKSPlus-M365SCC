@@ -41,7 +41,7 @@ function recovery
     if ($lastEntryResult -eq $false){
         if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase){
             WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  PLease check with your instructor."
-            exit
+            exitScript
         } else {
             Write-Host "There was a problem with Phase $lastEntryPhase, so trying again...."
             $global:nextPhase = $lastEntryPhase
@@ -61,7 +61,7 @@ Try{
 }
 catch {
     logWrite 1 $false "Unable to download the Script! Exiting."
-    exit
+    exitScript
 }
 logWrite 1 $True "The Script has been downloaded ."
 $global:nextPhase++
@@ -76,7 +76,7 @@ Try{
 }
 catch {
     logWrite 2 $false "Unable to download the Script! Exiting."
-    exit
+    exitScript
 }
 logWrite 2 $True "The Script has been downloaded ."
 $global:nextPhase++
@@ -90,7 +90,7 @@ function downloadscriptRetention
     }
     catch {
         logWrite 3 $false "Unable to download the Script! Exiting."
-        exit
+        exitScript
     }
     logWrite 3 $True "The Script has been downloaded ."
     $global:nextPhase++
@@ -99,13 +99,11 @@ function downloadscriptRetention
 function exitScript
 {
     #remove psession if fails only
-    #Get-PSSession | Remove-PSSession
-    logWrite 4 $true "Session removed successfully."
+    Get-PSSession | Remove-PSSession
+    exit
 }
 
 ################ main Script start ###################
-cd C:\temp\
-
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
@@ -132,5 +130,7 @@ if($nextPhase -eq 3){
 }
 
 if ($nextPhase -ge 4){
-    ./wks-new-label.ps1
+    logWrite 4 $true "Launching next script."
+    $nextScript = $LogPath + "wks-new-label.ps1"
+    .$nextScript
 }
