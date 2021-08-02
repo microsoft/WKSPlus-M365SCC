@@ -119,7 +119,8 @@ function exitScript
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
-} else {
+} 
+else {
     # if log already exists, check if we need to recover
     recovery
     createLabel

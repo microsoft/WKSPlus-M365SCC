@@ -182,7 +182,7 @@ function createSPOSite
       (
           [string]$Title  = "wks-compliance-center-test-jorg-01",
           [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg-01",
-          [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
+          [string]$Owner = "adm-jorg@myjorg.be",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
           [string]$Template = "STS#3"

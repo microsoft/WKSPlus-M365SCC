@@ -188,7 +188,7 @@ function downloadscriptlabel
 {
 
 Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/new-label.ps1 -OutFile c:\temp\wks-new-label.ps1
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile c:\temp\wks-new-label.ps1
 }
 catch {
     logWrite 8 $false "Unable to download the Script! Exiting."

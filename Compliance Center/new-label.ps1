@@ -141,6 +141,7 @@ function createLabel
         Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
         Start-Sleep -Seconds 1
     }
+}
 
 function createPolicy
 {
