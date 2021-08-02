@@ -60,99 +60,6 @@ function recovery
     }
 }
 
-function checkModule
-{
-    try {
-        Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null
-    } catch {
-        logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
-        exit
-    }
-    logWrite 1 $True "ExchangeOnlineManagement module is installed."
-    $global:nextPhase++
-}
-
-function checkModuleMSOL
-{
-    try {
-        Get-Command Connect-MsolService -ErrorAction Stop | Out-Null
-        
-    } catch {
-        logWrite 2 $false "MSOL module is not installed! Exiting."
-        exit
-    }
-    logWrite 2 $True "MSOL module is installed."
-    $global:nextPhase++
-}
-
-
-function connectExo
-{
-    try {
-        Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
-    }
-    catch {
-        Write-Host "Connecting to Exchange Online..."
-        Connect-ExchangeOnline
-        try {
-            Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
-        } catch {
-            logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
-            exit
-        }
-        if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Exchange Online"
-            $global:nextPhase++
-        }
-    }
-}
-
-function connectSCC
-{
-    try {
-        Get-Command Set-Label -ErrorAction:Stop | Out-Null
-    }
-    catch {
-        Write-Host "Connecting to Compliance Center..."
-        Connect-IPPSSession
-        try {
-            Get-Command Set-Label -ErrorAction:Stop | Out-Null
-        } catch {
-            logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
-            exit
-        }
-        if($global:recovery -eq $false){
-            logWrite 4 $true "Successfully connected to Compliance Center"
-            $global:nextPhase++
-        }
-    }
-}
-
-# -------------------
-# Connect to Microsoft Online Service
-# -------------------
-
-function ConnectMsolService
-{
-    try {
-        Get-MsolDomain -ErrorAction Stop
-    }
-    catch {
-        Write-Host "Connecting to msol Service..."
-        Connect-MsolService
-        try {
-        Get-MsolContact -ErrorAction Stop
-        } catch {
-            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
-            exit
-        }
-        if($global:recovery -eq $false){
-            logWrite 5 $true "Successfully connected to MSOL Service"
-            $global:nextPhase++
-        }
-    }
-}
-
 # -------------------
 # Retrive all accepted Domains
 # -------------------
@@ -164,10 +71,10 @@ Function getdomain
         $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
         write-host $global:Sharepoint
    }catch {
-        logWrite 6 $false "unable to fetch all accepted Domains."
+        logWrite 1 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 6 $True "Able to get all accepted Domains."
+    logWrite 1 $True "Able to get all accepted Domains."
     $global:nextPhase++
 
 
@@ -182,7 +89,7 @@ function createSPOSite
       (
           [string]$Title  = "wks-compliance-center-test-jorg-01",
           [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg-01",
-          [string]$Owner = "admin@$global:sharepoint.onmicrosoft.com",
+          [string]$Owner = "adm-jorg@myjorg.be",
           [int]$StorageQuota = "1024",
           [int]$ResourceQuota = "1024",
           [string]$Template = "STS#3"
@@ -201,10 +108,10 @@ function createSPOSite
           #write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
       }
   catch {
-          logWrite 7 $false "Unable to create the SharePoint Website."
+          logWrite 2 $false "Unable to create the SharePoint Website."
           exit
       }
-      logWrite 7 $True "Able to create the SharePoint Website."
+      logWrite 2 $True "Able to create the SharePoint Website."
       $global:nextPhase++
 }
 
@@ -221,10 +128,10 @@ Function CreateComplianceTag
      }
 
      catch {
-        logWrite 8 $false "unable to create Retention Tag"
+        logWrite 3 $false "unable to create Retention Tag"
         exit
     }
-    logWrite 8 $True "Able to Create Retention Tag."
+    logWrite 3 $True "Able to Create Retention Tag."
     $global:nextPhase++
 
 }
@@ -245,10 +152,10 @@ function NewRetentionPolicy
       
   }
   catch {
-          logWrite 9 $false "Unable to create the Retention Policy and Rule."
+          logWrite 4 $false "Unable to create the Retention Policy and Rule."
           exit
       }
-      logWrite 9 $True "The Retention policy and rule has been created."
+      logWrite 4 $True "The Retention policy and rule has been created."
       $global:nextPhase++
 }
 
@@ -269,10 +176,10 @@ function setlabelsposite
         Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
     }
     catch {
-        logWrite 10 $false "Unable to set the Retention label to $URL."
+        logWrite 5 $false "Unable to set the Retention label to $URL."
         exit
     }
-    logWrite 10 $True "Able to set the Retention label to $URL."
+    logWrite 5 $True "Able to set the Retention label to $URL."
     $global:nextPhase++
 }
 
@@ -282,7 +189,7 @@ function exitScript
     Get-PSSession | Remove-PSSession
     Disconnect-PnPOnline
     disconnect-sposervice
-    logWrite 11 $true "Session removed successfully."
+    logWrite 6 $true "Session removed successfully."
 }
 ################ main Script start ###################
 
@@ -292,11 +199,6 @@ if(!(Test-Path($logCSV))){
 } else {
     # if log already exists, check if we need to recover#
     recovery
-    checkModule
-    checkModuleMSOL
-    connectExo
-    connectSCC
-    ConnectMsolService
     getdomain
     createSPOSite
     CreateComplianceTag
@@ -310,46 +212,27 @@ if($nextPhase -eq 0){
 initialization
 }
 
+
 if($nextPhase -eq 1){
-checkModule
-}
-
-if($nextPhase -eq 2){
-checkModuleMSOL    
-}
-
-if($nextPhase -eq 3){
-connectExo
-}
-
-if($nextPhase -eq 4){
-connectSCC
-}
-
-if($nextPhase -eq 5){
-ConnectMsolService
-}
-
-if($nextPhase -eq 6){
 getdomain
 }
 
-if($nextPhase -eq 7){
+if($nextPhase -eq 2){
 createSPOSite
 }
 
-if ($nextPhase -eq 8){
+if ($nextPhase -eq 3){
 CreateComplianceTag
 }
 
-if ($nextPhase -eq 9){
+if ($nextPhase -eq 4){
 NewRetentionPolicy
 }
 
-if ($nextPhase -eq 10){
+if ($nextPhase -eq 5){
 setlabelsposite
 }
 
-if ($nextPhase -eq 11){
+if ($nextPhase -eq 6){
 exitScript
 }

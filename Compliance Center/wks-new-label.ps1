@@ -50,7 +50,7 @@ function recovery
     if ($lastEntryResult -eq $false){
         if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase){
             WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  PLease check with your instructor."
-            exitScript
+            exit
         } else {
             Write-Host "There was a problem with Phase $lastEntryPhase, so trying again...."
             $global:nextPhase = $lastEntryPhase
@@ -62,59 +62,6 @@ function recovery
     }
 }
 
-function checkModule 
-{
-    try {
-        Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null
-    } catch {
-        logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
-        exitScript
-    }
-    logWrite 1 $True "ExchangeOnlineManagement module is installed."
-    $global:nextPhase++
-}
-
-function connectExo
-{
-    try {
-        Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
-    }
-    catch {
-        Write-Host "Connecting to Exchange Online..."
-        Connect-ExchangeOnline
-        try {
-            Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
-        } catch {
-            logWrite 2 $false "Couldn't connect to Exchange Online.  Exiting."
-            exitScript
-        }
-        if($global:recovery -eq $false){
-            logWrite 2 $true "Successfully connected to Exchange Online"
-            $global:nextPhase++
-        }
-    }
-}
-
-function connectSCC
-{
-    try {
-        Get-Command Set-Label -ErrorAction:Stop | Out-Null
-    }
-    catch {
-        Write-Host "Connecting to Compliance Center..."
-        Connect-IPPSSession
-        try {
-            Get-Command Set-Label -ErrorAction:Stop | Out-Null
-        } catch {
-            logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
-            exitScript
-        }
-        if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Compliance Center"
-            $global:nextPhase++
-        }
-    }
-}
 
 function createLabel
 {
@@ -128,10 +75,10 @@ function createLabel
     try {
         $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
     } catch {
-        logWrite 4 $false "Error creating label"
-        exitScript
+        logWrite 1 $false "Error creating label"
+        exit
     }
-    logWrite 4 $true "Successfully created label"
+    logWrite 1 $true "Successfully created label"
     $global:nextPhase++
 
     #sleeping for 30 seconds
@@ -154,18 +101,17 @@ function createPolicy
     try {
         New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
     } catch {
-        logWrite 5 $false "Error creating label policy"
-        exitScript
+        logWrite 2 $false "Error creating label policy"
+        exit
     }
-    logWrite 5 $true "Successfully created label policy"
+    logWrite 2 $true "Successfully created label policy"
     $global:nextPhase++
 }
 
 function exitScript
 {
-    #remove psession if fails only
-    Get-PSSession | Remove-PSSession
-    exit
+    #Get-PSSession | Remove-PSSession
+    logWrite 6 $true "Session removed successfully."
 }
 
 ################ main Script start ###################
@@ -173,38 +119,22 @@ function exitScript
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
-} else {
+} 
+else {
     # if log already exists, check if we need to recover
     recovery
-    connectExo
-    connectSCC
     createLabel
     createPolicy
 }
 
 #use variable to control phases
 
+
+
 if($nextPhase -eq 1){
-checkModule
-}
-
-if($nextPhase -eq 2){
-connectExo
-}
-
-if($nextPhase -eq 3){
-connectSCC
-}
-
-if($nextPhase -eq 4){
 createLabel
 }
 
-if ($nextPhase -eq 5){
+if ($nextPhase -eq 2){
 createPolicy
-}
-
-if ($nextPhase -ge 6){
-    $nextScript = $LogPath + "./wks-new-retention.ps1"
-    .$nextScript
 }
