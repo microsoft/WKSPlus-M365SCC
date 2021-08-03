@@ -1,15 +1,17 @@
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\retentionlog.csv"
+$LogCSV = "C:\temp\LabelLog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
-$global:Sharepoint = ""
-$global:name = "WKS-Compliance-Tag-test-jorg-01"
-$global:Policy = "WKS-Compliance-policy-test-jorg-01"
-$global:RetentionAction = "KeepAndDelete"
-$global:retentionduration = "3"
-$global:RetentionType = "ModificationAgeInDays"
 
+#label
+$labelDisplayName = "WKS Highly Confidential$(get-date)"
+$labelName = "WKS-Highly-Confidential$(get-date)"
+$labelTooltip = "Contains Highly confidential info"
+$labelComment = "Documents with this label contain sensitive data."
+
+#label policy
+$labelPolicyName = "WKS-Highly-confidential-publish$(get-date)"
 
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -31,7 +33,7 @@ function initialization
     {
         New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
     }
-        Add-Content -Path $LogCSV -Value 'Phase,Result,DateTime,Status'
+        Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
         logWrite 0 $true "Initialization completed"
 }
 
@@ -60,179 +62,79 @@ function recovery
     }
 }
 
-# -------------------
-# Retrive all accepted Domains
-# -------------------
 
-Function getdomain
+function createLabel
 {
-    try{
-        $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
-        $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
-        write-host $global:Sharepoint
-   }catch {
-        logWrite 1 $false "unable to fetch all accepted Domains."
-        exit
-    }
-    logWrite 1 $True "Able to get all accepted Domains."
-    $global:nextPhase++
-
-
-}
-
-# ------------------------------
-# Create Sharepoint Online Site
-# ------------------------------
-function createSPOSite
-{
-    param
-      (
-          [string]$Title  = "wks-compliance-center-test-jorg-01",
-          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg-01",
-          [string]$Owner = "adm-jorg@myjorg.be",
-          [int]$StorageQuota = "1024",
-          [int]$ResourceQuota = "1024",
-          [string]$Template = "STS#3"
-      )
-   
-  #Connection parameters 
-  $AdminURL = "https://$global:Sharepoint-admin.sharepoint.com"
-   
-  Try{
-      #Connect to Office 365
-      Connect-sposervice -Url $AdminURL
-      
-
-             #sharepoint online create site collection powershell
-          $spoSiteCreationStatus = New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template | Out-Null
-          #write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
-      }
-  catch {
-          logWrite 2 $false "Unable to create the SharePoint Website."
-          exit
-      }
-      logWrite 2 $True "Able to create the SharePoint Website."
-      $global:nextPhase++
-}
-
-# -------------------
-# Create Compliance Tag
-# -------------------
-Function CreateComplianceTag
-{
+    <#
+    TO DO:
+    Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
+    #>
+    $domainName = (Get-AcceptedDomain | ?{$_.Default -eq $true}).DomainName
+    $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
+    Write-Host "Creating label with permissions: $Encpermission..."
     try {
-        #get-compliancetag -Identity "$global:name" 
-        #Write-Host "The Compliance Tag already Exists!" -ForegroundColor red
-        complianceTagStatus = new-ComplianceTag -Name "$global:name" -Comment 'Keep and delete tag - 3 Days' -IsRecordLabel $false -RetentionAction "$global:retentionaction" -RetentionDuration "$global:retentionduration" -RetentionType ModificationAgeInDays | Out-Null
-        
-     }
-
-     catch {
-        logWrite 3 $false "unable to create Retention Tag"
+        $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
+    } catch {
+        logWrite 1 $false "Error creating label"
         exit
     }
-    logWrite 3 $True "Able to Create Retention Tag."
+    logWrite 1 $true "Successfully created label"
     $global:nextPhase++
 
-}
-
-
-# -------------------
-# Create Retention Policy
-# -------------------
-function NewRetentionPolicy
-{
-    Try
+    #sleeping for 30 seconds
+    for ($i = 1; $i -le 30; $i++ )
     {
-     
-       #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test-jorg-01" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
-          New-RetentionComplianceRule -Policy "$global:Policy" -publishComplianceTag "$global:name"
-          write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
-      
-  }
-  catch {
-          logWrite 4 $false "Unable to create the Retention Policy and Rule."
-          exit
-      }
-      logWrite 4 $True "The Retention policy and rule has been created."
-      $global:nextPhase++
-}
-
-
-
-function setlabelsposite
-{
-    #sleep for 240 seconds
-    for ($i = 1; $i -le 240; $i++ )
-    {
-        $p = ([Math]::Round($i/240, 2) * 100)
-        Write-Progress -Activity "Waiting for label to sync to SharePoint" -Status "$p% Complete:" -PercentComplete $p
+        $p = ([Math]::Round($i/30, 2) * 100)
+        Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
         Start-Sleep -Seconds 1
     }
-    try{
-        connect-pnponline -url "https://M365x576146.sharepoint.com/sites/wks-compliance-center-test-jorg-01"
-        
-        Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
-    }
-    catch {
-        logWrite 5 $false "Unable to set the Retention label to $URL."
-        exit
-    }
-    logWrite 5 $True "Able to set the Retention label to $URL."
-    $global:nextPhase++
 }
 
+function createPolicy
+{
+        <#
+    TO DO:
+    - Need to check to see if label policy exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
+    - Need to make sure the labele exists
+    #>
+
+    try {
+        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction Stop | Out-Null
+    } catch {
+        logWrite 2 $false "Error creating label policy"
+        exit
+    }
+    logWrite 2 $true "Successfully created label policy"
+    $global:nextPhase++
+}
 
 function exitScript
 {
-    Get-PSSession | Remove-PSSession
-    Disconnect-PnPOnline
-    disconnect-sposervice
+    #Get-PSSession | Remove-PSSession
     logWrite 6 $true "Session removed successfully."
 }
+
 ################ main Script start ###################
 
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
-} else {
-    # if log already exists, check if we need to recover#
+} 
+else {
+    # if log already exists, check if we need to recover
     recovery
-    getdomain
-    createSPOSite
-    CreateComplianceTag
-    NewRetentionPolicy
-    setlabelsposite
+    createLabel
+    createPolicy
 }
 
 #use variable to control phases
 
-if($nextPhase -eq 0){
-initialization
-}
 
 
 if($nextPhase -eq 1){
-getdomain
+createLabel
 }
 
-if($nextPhase -eq 2){
-createSPOSite
-}
-
-if ($nextPhase -eq 3){
-CreateComplianceTag
-}
-
-if ($nextPhase -eq 4){
-NewRetentionPolicy
-}
-
-if ($nextPhase -eq 5){
-setlabelsposite
-}
-
-if ($nextPhase -eq 6){
-exitScript
+if ($nextPhase -eq 2){
+createPolicy
 }
