@@ -96,8 +96,7 @@ function connectExo
     try {
         $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
-    }
-    catch {
+    } catch {
         write-Debug $error[$error.Count-1]
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
@@ -110,12 +109,14 @@ function connectExo
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
+        Write-Debug "Connected to Exchange Online"
         if($global:recovery -eq $false){
             logWrite 3 $true "Successfully connected to Exchange Online"
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
     }
+    Write-Debug "Connected to Exchange Online"
 }
 # ----------------------------------------
 # Connect to Microsoft Compliance center
@@ -124,13 +125,17 @@ function connectSCC
 {
     try {
         Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
+        Write-Debug "Get-Command Set-Label -ErrorAction:SilentlyContinue"
     }
     catch {
+        write-Debug $error[$error.Count-1]
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
             Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
+            Write-Debug "Get-Command Set-Label -ErrorAction:SilentlyContinue"
         } catch {
+            write-Debug $error[$error.Count-1]
             logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
         }
@@ -139,6 +144,7 @@ function connectSCC
             $global:nextPhase++
         }
     }
+    Write-Debug "Connected to SCC"
 }
 
 # ------------------------------------
