@@ -3,7 +3,6 @@ $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\download1.csv"
 $global:nextPhase = 1
 $global:recovery = $false
-$global:Sharepoint = ""
 
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -158,20 +157,20 @@ Function getdomain
 {
     try{
         $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
-        $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
    }catch {
         logWrite 6 $false "unable to fetch all accepted Domains."
         exit
     }
     logWrite 6 $True "Able to get all accepted Domains."
     $global:nextPhase++
+    return $InitialDomain.name.split(".")[0]
 }
 
 
 
-function connectspo 
+function connectspo([string]$tenantName)
 {
-    $AdminURL = "https://$global:Sharepoint-admin.sharepoint.com"
+    $AdminURL = "https://$tenantName-admin.sharepoint.com"
     Try{
         #Connect to Office 365
         Connect-sposervice -Url $AdminURL
@@ -238,8 +237,8 @@ if(!(Test-Path($logCSV))){
     connectExo
     connectSCC
     ConnectMsolService
-    getdomain
-    connectspo
+    $tenantName = getdomain
+    connectspo $tenantName
 }
 
 #use variable to control phases
@@ -265,11 +264,11 @@ if($nextPhase -eq 5){
 }
 
 if($nextPhase -eq 6){
-    getdomain
+    $tenantName = getdomain
 }
 
 if($nextPhase -eq 7){
-    connectspo
+    connectspo $tenantName
 }
 
 if($nextPhase -eq 8){
