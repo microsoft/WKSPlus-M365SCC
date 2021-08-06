@@ -139,11 +139,11 @@ function ConnectMsolService
         try {
         Get-MsolContact -ErrorAction Stop
         } catch {
-            logWrite 6 $false "Couldn't connect to MSOL Service.  Exiting."
+            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
         }
         if($global:recovery -eq $false){
-            logWrite 6 $true "Successfully connected to MSOL Service"
+            logWrite 5 $true "Successfully connected to MSOL Service"
             $global:nextPhase++
         }
     }
@@ -159,12 +159,11 @@ Function getdomain
     try{
         $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
         $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
-        write-host $global:Sharepoint
    }catch {
-        logWrite 5 $false "unable to fetch all accepted Domains."
+        logWrite 6 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 5 $True "Able to get all accepted Domains."
+    logWrite 6 $True "Able to get all accepted Domains."
     $global:nextPhase++
 }
 

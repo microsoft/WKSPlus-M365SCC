@@ -33,6 +33,7 @@ function initialization
     {
         New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
     }
+        cd $LogPath
         Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
         logWrite 0 $true "Initialization completed"
 }
@@ -40,6 +41,7 @@ function initialization
 function recovery
 {
     Write-host "Starting recovery..."
+    cd $LogPath
     $global:recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)
@@ -78,20 +80,20 @@ function connectExo
 {
     try {
         Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
-    }
-    catch {
+    } catch {
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
-            Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
+            Get-Command Get-Mailbox -ErrorAction Stop | Out-Null
         } catch {
             logWrite 2 $false "Couldn't connect to Exchange Online.  Exiting."
             exitScript
         }
-        if($global:recovery -eq $false){
-            logWrite 2 $true "Successfully connected to Exchange Online"
-            $global:nextPhase++
-        }
+    }
+    
+    if($global:recovery -eq $false){
+        logWrite 2 $true "Connected to Exchange Online"
+        $global:nextPhase++
     }
 }
 
@@ -99,8 +101,7 @@ function connectSCC
 {
     try {
         Get-Command Set-Label -ErrorAction:Stop | Out-Null
-    }
-    catch {
+    } catch {
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
@@ -109,10 +110,10 @@ function connectSCC
             logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
             exitScript
         }
-        if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Compliance Center"
-            $global:nextPhase++
-        }
+    }
+    if($global:recovery -eq $false){
+        logWrite 3 $true "Connected to Compliance Center"
+        $global:nextPhase++
     }
 }
 

@@ -31,6 +31,7 @@ function initialization
     {
         New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
     }
+        cd $LogPath
         Add-Content -Path $LogCSV -Value 'Phase,Result,DateTime,Status'
         logWrite 0 $true "Initialization completed"
 }
@@ -38,6 +39,7 @@ function initialization
 function recovery
 {
     Write-host "Starting recovery..."
+    cd $LogPath
     $global:recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)
@@ -69,7 +71,6 @@ Function getdomain
     try{
         $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
         $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
-        write-host $global:Sharepoint
    }catch {
         logWrite 1 $false "unable to fetch all accepted Domains."
         exit
@@ -207,11 +208,6 @@ if(!(Test-Path($logCSV))){
 }
 
 #use variable to control phases
-
-if($nextPhase -eq 0){
-initialization
-}
-
 
 if($nextPhase -eq 1){
 getdomain
