@@ -285,7 +285,7 @@ if($nextPhase -eq 10){
 }
 
 if ($nextPhase -ge 11){
-    logWrite 11 $true "Launching next script."
     $nextScript = $LogPath + "wks-new-label.ps1"
+    logWrite 11 $true "Launching $nextScript"
     .$nextScript
 }

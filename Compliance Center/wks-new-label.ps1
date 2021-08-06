@@ -125,7 +125,6 @@ function createLabel
     #>
     $domainName = (Get-AcceptedDomain | ?{$_.Default -eq $true}).DomainName
     $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
-    Write-Host "Creating label with permissions: $Encpermission..."
     try {
         $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction Stop | Out-Null
     } catch {
@@ -170,7 +169,7 @@ function exitScript
 }
 
 ################ main Script start ###################
-
+Write-Host "Starting Sensitivity Label Configuration Script...."
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
@@ -205,5 +204,6 @@ createPolicy
 
 if ($nextPhase -ge 6){
     $nextScript = $LogPath + "./wks-new-retention.ps1"
+    logwrite 6 $true "Launching $nextScript"
     .$nextScript
 }
