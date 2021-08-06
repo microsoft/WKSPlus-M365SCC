@@ -251,10 +251,6 @@ if(!(Test-Path($logCSV))){
 #use variable to control phases
 
 if($nextPhase -eq 1){
-    recovery
-}
-
-if($nextPhase -eq 2){
     checkModule
 }
 
