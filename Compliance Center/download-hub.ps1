@@ -36,9 +36,13 @@ function recovery
     $global:recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)
+    Write-Debug "Last Entry: $lastEntry"
     $lastEntry2 = (($savedLog.Count) - 2)
+    Write-Debug "Entry Before Last: $lastEntry2"
     $lastEntryPhase = [int]$savedLog[$lastEntry].Phase
+    Write-Debug "Last Phase: $lastEntryPhase"
     $lastEntryResult = $savedLog[$lastEntry].Result
+    Write-Debug "Last Entry Result: $lastEntryResult"
 
     if ($lastEntryResult -eq $false){
         if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase){
@@ -47,49 +51,60 @@ function recovery
         } else {
             Write-Host "There was a problem with Phase $lastEntryPhase, so trying again...."
             $global:nextPhase = $lastEntryPhase
+            Write-Debug "nextPhase set to $global:nextPhase"
         }
     } else {
         # set the phase
         Write-Host "Phase $lastEntryPhase was successful, so picking up where we left off...."
         $global:nextPhase = $lastEntryPhase + 1
+        write-Debug "nextPhase set to $global:nextPhase"
     }
 }
 
 function checkModule
 {
     try {
-        Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue | Out-Null
+        $testModule = Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue | Out-Null
+        Write-Debug "Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue"
+        Write-Debug $testModule
     } catch {
         logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
         exit
     }
     logWrite 1 $True "ExchangeOnlineManagement module is installed."
     $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
 }
 
 function checkModuleMSOL
 {
     try {
-        Get-Command Connect-MsolService -ErrorAction SilentlyContinue | Out-Null
-        
+        $testModule = Get-Command Connect-MsolService -ErrorAction SilentlyContinue | Out-Null
+        Write-Debug "Get-Command Connect-MsolService -ErrorAction SilentlyContinue"
+        Write-Debug $testModule
     } catch {
         logWrite 2 $false "MSOL module is not installed! Exiting."
         exit
     }
     logWrite 2 $True "MSOL module is installed."
     $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
 }
 
 function connectExo
 {
     try {
-        Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
+        $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
+        Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
+        Write-Debug $testConnection
     }
     catch {
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
-            Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
+            $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
+            Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
+            Write-Debug $testConnection
         } catch {
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
@@ -97,6 +112,7 @@ function connectExo
         if($global:recovery -eq $false){
             logWrite 3 $true "Successfully connected to Exchange Online"
             $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
         }
     }
 }
