@@ -130,8 +130,10 @@ function getSiteOwner
         logWrite 3 $false "Failed to get or set siteOwner variable."
         exitScript
     } else {
-        logWrite 3 $true "siteOwner set as $siteOwner"
-        $global:nextPhase++
+        if($global:recovery -eq $false){
+            logWrite 3 $true "siteOwner set as $siteOwner"
+            $global:nextPhase++
+        }
         return $siteOwner
     }
 }
@@ -148,8 +150,10 @@ Function getdomain
         logWrite 4 $false "unable to fetch all accepted Domains."
         exitScript
     }
-    logWrite 4 $True "Able to get all accepted Domains."
-    $global:nextPhase++
+    if($global:recovery -eq $false){
+        logWrite 4 $True "Able to get all accepted Domains."
+        $global:nextPhase++
+    }
     return $InitialDomain.name.split(".")[0]
 }
 
@@ -161,12 +165,13 @@ function connectspo([string]$tenantName)
         Connect-sposervice -Url $AdminURL
         }
         catch {
-            logWrite 5 $false "Unable to create the SharePoint Website."
+            logWrite 5 $false "Unable to connect to SPOusing $adminURL"
             exitScript
         }
-        logWrite 5 $True "Able to create the SharePoint Website."
-        $global:nextPhase++
-  
+        if($global:recovery -eq $false){
+            logWrite 5 $True "Connected to SPO using $adminURL successfully."
+            $global:nextPhase++
+        }
 }
 
 function connectpnp([string]$tenantName)
@@ -179,8 +184,10 @@ function connectpnp([string]$tenantName)
         logWrite 6 $false "Failed to connect to PnP Powershell for $connectionURL"
         exitScript
     }
-    logWrite 6 $true "Connected successfully to PnP Powershell for $connectionURL"
-    $global:nextPhase++
+    if($global:recovery -eq $false){
+        logWrite 6 $true "Connected successfully to PnP Powershell for $connectionURL"
+        $global:nextPhase++
+    }
 }
 
 # ------------------------------
@@ -205,7 +212,7 @@ function createSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwne
 Function CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
     try {
-        complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
+        $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
         } catch {
         logWrite 8 $false "Unable to create Retention Tag $retentionTagName"
         exitScript
