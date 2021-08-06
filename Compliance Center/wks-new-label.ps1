@@ -64,6 +64,15 @@ function recovery
     }
 }
 
+function goToSleep ([int]$seconds){
+    for ($i = 1; $i -le $seconds; $i++ )
+    {
+        $p = ([Math]::Round($i/$seconds, 2) * 100)
+        Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
+        Start-Sleep -Seconds 1
+    }
+}
+
 function checkModule 
 {
     try {
@@ -135,12 +144,8 @@ function createLabel
     $global:nextPhase++
 
     #sleeping for 30 seconds
-    for ($i = 1; $i -le 30; $i++ )
-    {
-        $p = ([Math]::Round($i/30, 2) * 100)
-        Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
-        Start-Sleep -Seconds 1
-    }
+    
+    goToSleep 30
 }
 
 function createPolicy

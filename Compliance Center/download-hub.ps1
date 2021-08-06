@@ -136,7 +136,7 @@ function ConnectMsolService
         Write-Host "Connecting to msol Service..."
         Connect-MsolService
         try {
-        Get-MsolContact -ErrorAction Stop
+        $testContact = Get-MsolContact -ErrorAction Stop | Out-Null
         } catch {
             logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
@@ -156,7 +156,7 @@ function ConnectMsolService
 Function getdomain
 {
     try{
-        $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
+        $InitialDomain = Get-MsolDomain | Where-Object {$_.IsInitial -eq $true}
    }catch {
         logWrite 6 $false "unable to fetch all accepted Domains."
         exit

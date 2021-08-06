@@ -1,14 +1,23 @@
-################ Define Variables ###################
+################ Standard Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
-$global:Sharepoint = ""
-$global:name = "WKS-Compliance-Tag-test-jorg-01"
-$global:Policy = "WKS-Compliance-policy-test-jorg-01"
-$global:RetentionAction = "KeepAndDelete"
-$global:retentionduration = "3"
-$global:RetentionType = "ModificationAgeInDays"
+################ Site Variables ###################
+$siteName = "wks-compliance-center-test-jorg-01"
+$siteOwner = "" #need to set this after we connect to msonline
+$siteStorageQuota = 1024
+$siteResourceQuota = 1024
+$siteTemplate = "STS#3"
+################ Tag Variables ###################
+$retentionTagName = "WKS-Compliance-Tag-test-jorg-01"
+$retentionTagComment = "Keep and delete tag - 3 Days"
+$retentionTagAction = "KeepAndDelete"
+$retentionTagDuration = 3
+$retentionTagType = "ModificationAgeInDays"
+################ Policy Variables ###################
+$retentionPolicyName = "WKS-Compliance-policy-test-jorg-01"
+
 
 
 ################ Functions ###################
@@ -62,6 +71,57 @@ function recovery
     }
 }
 
+function goToSleep ([int]$seconds){
+    for ($i = 1; $i -le $seconds; $i++ )
+    {
+        $p = ([Math]::Round($i/$seconds, 2) * 100)
+        Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
+        Start-Sleep -Seconds 1
+    }
+}
+
+function connectSCC
+{
+    try {
+        Get-Command Set-Label -ErrorAction:Stop | Out-Null
+    }
+    catch {
+        Write-Host "Connecting to Compliance Center..."
+        Connect-IPPSSession
+        try {
+            Get-Command Set-Label -ErrorAction:Stop | Out-Null
+        } catch {
+            logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
+            exit
+        }
+        if($global:recovery -eq $false){
+            logWrite 4 $true "Successfully connected to Compliance Center"
+            $global:nextPhase++
+        }
+    }
+}
+
+function ConnectMsolService
+{
+    try {
+        Get-MsolDomain -ErrorAction Stop
+    }
+    catch {
+        Write-Host "Connecting to msol Service..."
+        Connect-MsolService
+        try {
+        $testContact = Get-MsolContact -ErrorAction Stop | Out-Null
+        } catch {
+            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
+            exit
+        }
+        if($global:recovery -eq $false){
+            logWrite 5 $true "Successfully connected to MSOL Service"
+            $global:nextPhase++
+        }
+    }
+}
+
 # -------------------
 # Retrive all accepted Domains
 # -------------------
@@ -69,22 +129,43 @@ function recovery
 Function getdomain
 {
     try{
-        $InitialDomain = Get-MsolDomain -TenantId $customer.TenantId | Where-Object {$_.IsInitial -eq $true}
-        $global:Sharepoint = "$($InitialDomain.name.split(".")[0])"
+        $InitialDomain = Get-MsolDomain | Where-Object {$_.IsInitial -eq $true}
    }catch {
-        logWrite 1 $false "unable to fetch all accepted Domains."
+        logWrite 6 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 1 $True "Able to get all accepted Domains."
+    logWrite 6 $True "Able to get all accepted Domains."
     $global:nextPhase++
+    return $InitialDomain.name.split(".")[0]
+}
 
+function connectspo([string]$tenantName)
+{
+    $AdminURL = "https://$tenantName-admin.sharepoint.com"
+    Try{
+        #Connect to Office 365
+        Connect-sposervice -Url $AdminURL
+        }
+        catch {
+            logWrite 7 $false "Unable to create the SharePoint Website."
+            exit
+        }
+        logWrite 7 $True "Able to create the SharePoint Website."
+        $global:nextPhase++
+  
+}
 
+function connectpnp([string]$tenantName)
+{
+    $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
+    # add try/catch
+    Connect-PnpOnline -Url $connectionURL -useWebLogin
 }
 
 # ------------------------------
 # Create Sharepoint Online Site
 # ------------------------------
-function createSPOSite
+function createSPOSite([string]$tenantName)
 {
     param
       (
@@ -165,12 +246,9 @@ function NewRetentionPolicy
 function setlabelsposite
 {
     #sleep for 240 seconds
-    for ($i = 1; $i -le 240; $i++ )
-    {
-        $p = ([Math]::Round($i/240, 2) * 100)
-        Write-Progress -Activity "Waiting for label to sync to SharePoint" -Status "$p% Complete:" -PercentComplete $p
-        Start-Sleep -Seconds 1
-    }
+    
+    goToSleep 240
+
     try{
         connect-pnponline -url "https://M365x576146.sharepoint.com/sites/wks-compliance-center-test-jorg-01" -useWebLogin
         
@@ -188,8 +266,6 @@ function setlabelsposite
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    Disconnect-PnPOnline
-    disconnect-sposervice
     logWrite 6 $true "Session removed successfully."
 }
 ################ main Script start ###################
