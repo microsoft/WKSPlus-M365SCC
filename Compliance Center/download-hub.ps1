@@ -25,6 +25,7 @@ function initialization
     {
         New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
     }
+        cd $LogPath
         Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
         logWrite 0 $true "Initialization completed"
 }
@@ -32,6 +33,7 @@ function initialization
 function recovery
 {
     Write-host "Starting recovery..."
+    cd $LogPath
     $global:recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)
@@ -228,8 +230,6 @@ function downloadscriptRetention
 }
 
 ################ main Script start ###################
-cd C:\temp\
-
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
     initialization
