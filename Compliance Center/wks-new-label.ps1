@@ -1,4 +1,9 @@
-﻿################ Define Variables ###################
+﻿Param (
+    [switch]$debug,
+    [switch]$transcriptEnabled
+)
+
+################ Define Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\LabelLog.csv"
 $global:nextPhase = 1
@@ -12,6 +17,16 @@ $labelComment = "Documents with this label contain sensitive data."
 
 #label policy
 $labelPolicyName = "WKS-Highly-confidential-publish"
+
+###DEBUG###
+$oldDebugPreference = $DebugPreference
+if($debug){
+    write-debug "Debug Enabled"
+    $DebugPreference = "Continue"
+    if(!$transcriptEnabled){
+        Start-Transcript -Path "$($LogPath)sensitivitylabel-debug.txt"
+    }
+}
 
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -169,7 +184,10 @@ function createPolicy
 function exitScript
 {
     #remove psession if fails only
-    Get-PSSession | Remove-PSSession
+    if ($debug){
+        $DebugPreference = $oldDebugPreference
+        Stop-Transcript
+    }
     exit
 }
 
@@ -210,5 +228,9 @@ createPolicy
 if ($nextPhase -ge 6){
     $nextScript = $LogPath + "./wks-new-retention.ps1"
     logwrite 6 $true "Launching $nextScript"
-    .$nextScript
+    if ($debug){
+        .$nextScript -$debug -$transcriptEnabled
+    } else {
+        .$nextScript
+    }
 }

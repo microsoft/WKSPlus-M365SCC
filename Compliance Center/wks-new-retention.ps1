@@ -1,3 +1,8 @@
+Param (
+    [switch]$debug,
+    [switch]$transcriptEnabled
+)
+
 ################ Standard Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\retentionlog.csv"
@@ -17,6 +22,16 @@ $retentionTagType = "ModificationAgeInDays"
 $isRecordLabel = $false
 ################ Policy Variables ###################
 $retentionPolicyName = "WKS-Compliance-policy-test-jorg-01"
+
+###DEBUG###
+$oldDebugPreference = $DebugPreference
+if($debug){
+    write-debug "Debug Enabled"
+    $DebugPreference = "Continue"
+    if(!$transcriptEnabled){
+        Start-Transcript -Path "$($LogPath)retention-debug.txt"
+    }
+}
 
 
 
@@ -277,7 +292,11 @@ function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retent
 
 function exitScript
 {
-    Get-PSSession | Remove-PSSession
+    # Get-PSSession | Remove-PSSession
+    if ($debug){
+        Stop-Transcript
+        $DebugPreference = $oldDebugPreference
+    }
     exit
 }
 

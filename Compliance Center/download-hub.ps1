@@ -1,8 +1,20 @@
+Param (
+    [switch]$debug
+)
+
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\download1.csv"
 $global:nextPhase = 1
 $global:recovery = $false
+
+###DEBUG###
+$oldDebugPreference = $DebugPreference
+if($debug){
+    write-debug "Debug Enabled"
+    $DebugPreference = "Continue"
+    Start-Transcript -Path "$($LogPath)download-debug.txt"
+}
 
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -47,7 +59,7 @@ function recovery
     if ($lastEntryResult -eq $false){
         if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase){
             WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  PLease check with your instructor."
-            exit
+            exitScript
         } else {
             Write-Host "There was a problem with Phase $lastEntryPhase, so trying again...."
             $global:nextPhase = $lastEntryPhase
@@ -64,12 +76,12 @@ function recovery
 function checkModule
 {
     try {
-        $testModule = Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue | Out-Null
-        Write-Debug "Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue"
+        Write-Debug "Get-Command Connect-ExchangeOnline -ErrorAction stop"
+        $testModule = Get-Command Connect-ExchangeOnline -ErrorAction stop | Out-Null
     } catch {
         write-Debug $error[0].Exception
         logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
-        exit
+        exitScript
     }
     logWrite 1 $True "ExchangeOnlineManagement module is installed."
     $global:nextPhase++
@@ -79,12 +91,12 @@ function checkModule
 function checkModuleMSOL
 {
     try {
-        $testModule = Get-Command Connect-MsolService -ErrorAction SilentlyContinue | Out-Null
-        Write-Debug "Get-Command Connect-MsolService -ErrorAction SilentlyContinue"
+        Write-Debug "Get-Command Connect-MsolService -ErrorAction stop"
+        $testModule = Get-Command Connect-MsolService -ErrorAction stop | Out-Null
     } catch {
         write-Debug $error[0].Exception
         logWrite 2 $false "MSOL module is not installed! Exiting."
-        exit
+        exitScript
     }
     logWrite 2 $True "MSOL module is installed."
     $global:nextPhase++
@@ -94,20 +106,20 @@ function checkModuleMSOL
 function connectExo
 {
     try {
-        $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
-        Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
+        Write-Debug "Get-Command Set-Mailbox -ErrorAction stop"
+        $testConnection = Get-Command Set-Mailbox -ErrorAction stop | Out-Null
     } catch {
         write-Debug $error[0].Exception
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
-            $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
-            Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
-
+            Write-Debug "Get-Command Set-Mailbox -ErrorAction stop"
+            $testConnection = Get-Command Set-Mailbox -ErrorAction stop | Out-Null
+            
         } catch {
             write-Debug $error[0].Exception
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
-            exit
+            exitScript
         }
     }
     if($global:recovery -eq $false){
@@ -122,25 +134,26 @@ function connectExo
 function connectSCC
 {
     try {
-        Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
-        Write-Debug "Get-Command Set-Label -ErrorAction:SilentlyContinue"
+        Write-Debug "Get-Command Set-Label -ErrorAction:stop"
+        Get-Command Set-Label -ErrorAction:Stop | Out-Null
     }
     catch {
         write-Debug $error[0].Exception
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
-            Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
-            Write-Debug "Get-Command Set-Label -ErrorAction:SilentlyContinue"
+            Write-Debug "Get-Command Set-Label -ErrorAction:Stop"
+            Get-Command Set-Label -ErrorAction:Stop | Out-Null
         } catch {
             write-Debug $error[0].Exception
             logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
-            exit
+            exitScript
         }
     }
     if($global:recovery -eq $false){
         logWrite 4 $true "Successfully connected to Compliance Center"
         $global:nextPhase++
+        Write-Debug "nextPhase set to $global:nextPhase"
     }
 }
 
@@ -150,21 +163,25 @@ function connectSCC
 function ConnectMsolService
 {
     try {
-        $testConnection = Get-MsolDomain -ErrorAction SilentlyContinue | out-null
-    }
-    catch {
+        write-debug "$testConnection = Get-MsolDomain -ErrorAction stop"
+        $testConnection = Get-MsolDomain -ErrorAction stop | out-null
+    } catch {
+        write-Debug $error[0].Exception
         Write-Host "Connecting to msol Service..."
         Connect-MsolService
         try {
-        $testContact = Get-MsolContact -ErrorAction SilentlyContinue | Out-Null
+            write-Debug "Get-MsolContact -ErrorAction SilentlyContinue"
+            $testContact = Get-MsolContact -ErrorAction stop | Out-Null
         } catch {
+            write-Debug $error[0].Exception
             logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
-            exit
+            exitScript
         }
     }
     if($global:recovery -eq $false){
         logWrite 5 $true "Successfully connected to MSOL Service"
         $global:nextPhase++
+        Write-Debug "nextPhase set to $global:nextPhase"
     }
 }
 
@@ -176,14 +193,18 @@ function ConnectMsolService
 Function getdomain
 {
     try{
-        $InitialDomain = Get-MsolDomain | Where-Object {$_.IsInitial -eq $true}
+        Write-Debug "$InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}"
+        $InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}
    }catch {
+        write-Debug $error[0].Exception
         logWrite 6 $false "unable to fetch all accepted Domains."
-        exit
+        exitScript
     }
+    Write-Debug "Initial domain: $InitialDomain"
     if($global:recovery -eq $false){
         logWrite 6 $True "Able to get all accepted Domains."
         $global:nextPhase++
+        Write-Debug "nextPhase set to $global:nextPhase"
     }
     return $InitialDomain.name.split(".")[0]
 }
@@ -193,121 +214,162 @@ Function getdomain
 function connectspo([string]$tenantName)
 {
     $AdminURL = "https://$tenantName-admin.sharepoint.com"
-    Try{
+    Try {
+        write-Debug "Get-Sposite -ErrorAction stop"
+        $testConnection = Get-Sposite -ErrorAction stop | Out-Null
+    } catch {
+        write-Debug $error[0].Exception
+        Try{
         #Connect to Office 365
-        Connect-sposervice -Url $AdminURL
+            write-Debug "Connect-sposervice -Url $AdminURL"
+            Connect-sposervice -Url $AdminURL
+        } catch {
+            write-Debug $error[0].Exception
+            logWrite 7 $false "Unable to connect to Sharepoint using $adminURL."
+            exitScript
         }
-        catch {
-            logWrite 7 $false "Unable to create the SharePoint Website."
-            exit
-        }
-        if($global:recovery -eq $false){
-            logWrite 7 $True "Able to create the SharePoint Website."
-            $global:nextPhase++
-        }
+    }
+    if($global:recovery -eq $false){
+        logWrite 7 $True "Successfully connected to Sharepoint using $adminURL."
+        $global:nextPhase++
+        Write-Debug "nextPhase set to $global:nextPhase"
+    }
 }
 
 function downloadscriptlabel
 {
-
-Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile c:\temp\wks-new-label.ps1
+    Try{
+        Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile c:\temp\wks-new-label.ps1 -ErrorAction Stop"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile c:\temp\wks-new-label.ps1 -ErrorAction Stop
+    } catch {
+        write-Debug $error[0].Exception
+        logWrite 8 $false "Unable to download the Script! Exiting."
+        exitScript
+    }
+    logWrite 8 $True "The Script has been downloaded ."
+    $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
 }
-catch {
-    logWrite 8 $false "Unable to download the Script! Exiting."
-    exit
-}
-logWrite 8 $True "The Script has been downloaded ."
-$global:nextPhase++
-}
-
 
 function downloadscriptDLP
 {
-
-Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1
-}
-catch {
-    logWrite 9 $false "Unable to download the Script! Exiting."
-    exit
-}
-logWrite 9 $True "The Script has been downloaded ."
-$global:nextPhase++
+    Try{
+        Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1 -ErrorAction Stop"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1 -ErrorAction Stop
+        } catch {
+            write-Debug $error[0].Exception
+            logWrite 9 $false "Unable to download the Script! Exiting."
+            exitScript
+        }
+    logWrite 9 $True "The Script has been downloaded ."
+    $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
 }
 
 function downloadscriptRetention
 {
 
     try{
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1
+        Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1 -ErrorAction Stop"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1 -ErrorAction Stop
     }
     catch {
+        write-Debug $error[0].Exception
         logWrite 10 $false "Unable to download the Script! Exiting."
-        exit
+        exitScript
     }
     logWrite 10 $True "The Script has been downloaded ."
     $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
+}
+
+function exitScript
+{
+    # Get-PSSession | Remove-PSSession
+    if ($debug){
+        $DebugPreference = $oldDebugPreference
+        Stop-Transcript
+    }
+    exit
 }
 
 ################ main Script start ###################
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
+    Write-Debug "Entering Initialization"
     initialization
 } else {
     # if log already exists, check if we need to recover
+    Write-Debug "Entering Recovery"
     recovery
     connectExo
     connectSCC
     ConnectMsolService
     $tenantName = getdomain
+    Write-Debug "$tenantName Returned"
     connectspo $tenantName
 }
 
 #use variable to control phases
 
 if($nextPhase -eq 1){
+    write-debug "Phase $nextPhase"
     checkModule
 }
 
 if($nextPhase -eq 2){
+    write-debug "Phase $nextPhase"
     checkModulemsol
 }
 
 if($nextPhase -eq 3){
+    write-debug "Phase $nextPhase"
     connectExo
 }
 
 if($nextPhase -eq 4){
+    write-debug "Phase $nextPhase"
     connectSCC
 }
 
 if($nextPhase -eq 5){
+    write-debug "Phase $nextPhase"
     ConnectMsolService
 }
 
 if($nextPhase -eq 6){
+    write-debug "Phase $nextPhase"
     $tenantName = getdomain
+    write-script "$tenantName Returned"
 }
 
 if($nextPhase -eq 7){
+    write-debug "Phase $nextPhase"
     connectspo $tenantName
 }
 
 if($nextPhase -eq 8){
+    write-debug "Phase $nextPhase"
     downloadscriptlabel
 }
 
 if($nextPhase -eq 9){
+    write-debug "Phase $nextPhase"
     downloadscriptDLP
 }
 
 if($nextPhase -eq 10){
+    write-debug "Phase $nextPhase"
     downloadscriptRetention
 }
 
 if ($nextPhase -ge 11){
+    write-debug "Phase $nextPhase"
     $nextScript = $LogPath + "wks-new-label.ps1"
     logWrite 11 $true "Launching $nextScript"
-    .$nextScript
+    if ($debug){
+        .$nextScript -$debug -$transcriptEnabled
+    } else {
+        .$nextScript
+    }
 }
