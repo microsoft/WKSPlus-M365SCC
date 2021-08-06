@@ -67,7 +67,7 @@ function checkModule
         $testModule = Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue"
     } catch {
-        write-Debug $error[0]
+        write-Debug $error[0].Exception
         logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
         exit
     }
@@ -82,7 +82,7 @@ function checkModuleMSOL
         $testModule = Get-Command Connect-MsolService -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Connect-MsolService -ErrorAction SilentlyContinue"
     } catch {
-        write-Debug $error[0]
+        write-Debug $error[0].Exception
         logWrite 2 $false "MSOL module is not installed! Exiting."
         exit
     }
@@ -97,7 +97,7 @@ function connectExo
         $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
     } catch {
-        write-Debug $error[0]
+        write-Debug $error[0].Exception
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
@@ -105,7 +105,7 @@ function connectExo
             Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
 
         } catch {
-            write-Debug $error[0]
+            write-Debug $error[0].Exception
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
@@ -126,14 +126,14 @@ function connectSCC
         Write-Debug "Get-Command Set-Label -ErrorAction:SilentlyContinue"
     }
     catch {
-        write-Debug $error[0]
+        write-Debug $error[0].Exception
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
             Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
             Write-Debug "Get-Command Set-Label -ErrorAction:SilentlyContinue"
         } catch {
-            write-Debug $error[0]
+            write-Debug $error[0].Exception
             logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
         }
