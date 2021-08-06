@@ -103,7 +103,7 @@ function connectSCC
 function ConnectMsolService
 {
     try {
-        Get-MsolDomain -ErrorAction Stop
+        $testConnection = Get-MsolDomain -ErrorAction Stop
     }
     catch {
         Write-Host "Connecting to msol Service..."
@@ -124,7 +124,7 @@ function ConnectMsolService
 function getSiteOwner
 {
     # shoudl be connected to MSOL Service to set site owner
-    $siteOwner = (Get-MsolUser -ErrorAction Silent | ?{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
+    $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | ?{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
     #then verify
     if($siteOwner -eq $null){
         logWrite 3 $false "Failed to get or set siteOwner variable."
@@ -161,17 +161,20 @@ function connectspo([string]$tenantName)
 {
     $AdminURL = "https://$tenantName-admin.sharepoint.com"
     Try{
+        $testConnection = Get-SpoSite -ErrorAction Stop | Out-Null
+    } catch {
+        Try{
         #Connect to Office 365
         Connect-sposervice -Url $AdminURL
-        }
-        catch {
+        } catch {
             logWrite 5 $false "Unable to connect to SPOusing $adminURL"
             exitScript
         }
-        if($global:recovery -eq $false){
-            logWrite 5 $True "Connected to SPO using $adminURL successfully."
-            $global:nextPhase++
-        }
+    }
+    if($global:recovery -eq $false){
+        logWrite 5 $True "Connected to SPO using $adminURL successfully."
+        $global:nextPhase++
+    }
 }
 
 function connectpnp([string]$tenantName)

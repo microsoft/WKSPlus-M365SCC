@@ -161,8 +161,10 @@ Function getdomain
         logWrite 6 $false "unable to fetch all accepted Domains."
         exit
     }
-    logWrite 6 $True "Able to get all accepted Domains."
-    $global:nextPhase++
+    if($global:recovery -eq $false){
+        logWrite 6 $True "Able to get all accepted Domains."
+        $global:nextPhase++
+    }
     return $InitialDomain.name.split(".")[0]
 }
 
@@ -179,8 +181,10 @@ function connectspo([string]$tenantName)
             logWrite 7 $false "Unable to create the SharePoint Website."
             exit
         }
-        logWrite 7 $True "Able to create the SharePoint Website."
-        $global:nextPhase++
+        if($global:recovery -eq $false){
+            logWrite 7 $True "Able to create the SharePoint Website."
+            $global:nextPhase++
+        }
   
 }
 
