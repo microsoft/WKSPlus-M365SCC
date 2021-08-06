@@ -98,12 +98,12 @@ function goToSleep ([int]$seconds){
 function connectSCC
 {
     try {
-        Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
+        Get-Command Set-Label -ErrorAction:stop | Out-Null
     } catch {
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
-            Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
+            Get-Command Set-Label -ErrorAction:stop | Out-Null
         } catch {
             logWrite 1 $false "Couldn't connect to Compliance Center.  Exiting."
             exitScript
@@ -118,13 +118,13 @@ function connectSCC
 function ConnectMsolService
 {
     try {
-        $testConnection = Get-MsolDomain -ErrorAction SilentlyContinue
+        $testConnection = Get-MsolDomain -ErrorAction stop
     }
     catch {
         Write-Host "Connecting to msol Service..."
         Connect-MsolService
         try {
-        $testContact = Get-MsolContact -ErrorAction SilentlyContinue | Out-Null
+        $testContact = Get-MsolContact -ErrorAction stop | Out-Null
         } catch {
             logWrite 2 $false "Couldn't connect to MSOL Service.  Exiting."
             exitScript
@@ -160,7 +160,7 @@ function getSiteOwner
 Function getdomain
 {
     try{
-        $InitialDomain = Get-MsolDomain | Where-Object {$_.IsInitial -eq $true}
+        $InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}
    }catch {
         logWrite 4 $false "unable to fetch all accepted Domains."
         exitScript
@@ -176,7 +176,7 @@ function connectspo([string]$tenantName)
 {
     $AdminURL = "https://$tenantName-admin.sharepoint.com"
     Try{
-        $testConnection = Get-SpoSite -ErrorAction SilentlyContinue | Out-Null
+        $testConnection = Get-SpoSite -ErrorAction stop | Out-Null
     } catch {
         Try{
         #Connect to Office 365
@@ -215,7 +215,7 @@ function createSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwne
 {
     $url = "https://$tenantName.sharepoint.com/sites/$siteName"
     Try{
-        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate | Out-Null
+        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
         } catch {
             logWrite 7 $false "Unable to create the SharePoint site $siteName."
             exitScript
@@ -232,6 +232,7 @@ Function CreateComplianceTag([string]$retentionTagName, [string]$retentionTagCom
     try {
         $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
         } catch {
+        write-Debug Error[0].Exception
         logWrite 8 $false "Unable to create Retention Tag $retentionTagName"
         exitScript
     }
@@ -251,19 +252,21 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
     Try
     {
         #Create compliance retention Policy
-        $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All | Out-Null
+        $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
     } catch {
         #failed to create policy
+        write-Debug Error[0].Exception
         logWrite 9 $false "Unable to create the Retention Policy $retentionPolicyName"
         exitScript
     }
     
     #then, if successfull, create rule in policy
     try {
-        $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName | Out-Null
+        $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName -ErrorAction Stop | Out-Null
     }
     catch {
          #failed to create policy
+         write-Debug Error[0].Exception
          logWrite 9 $false "Unable to create the Retention Policy Rule."
          exitScript
     }
@@ -280,8 +283,9 @@ function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retent
     goToSleep 240
 
     try{
-        Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true
+        Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true -ErrorAction Stop
     } catch {
+        write-Debug Error[0].Exception
         logWrite 10 $false "Unable to set the Retention label to $URL."
         exitScript
     }

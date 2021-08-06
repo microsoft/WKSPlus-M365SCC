@@ -103,12 +103,12 @@ function checkModule
 function connectExo
 {
     try {
-        Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
+        Get-Command Set-Mailbox -ErrorAction stop | Out-Null
     } catch {
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
-            Get-Command Get-Mailbox -ErrorAction SilentlyContinue | Out-Null
+            Get-Command Get-Mailbox -ErrorAction stop | Out-Null
         } catch {
             logWrite 2 $false "Couldn't connect to Exchange Online.  Exiting."
             exitScript
@@ -124,12 +124,12 @@ function connectExo
 function connectSCC
 {
     try {
-        Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
+        Get-Command Set-Label -ErrorAction:stop | Out-Null
     } catch {
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
-            Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
+            Get-Command Set-Label -ErrorAction:stop | Out-Null
         } catch {
             logWrite 3 $false "Couldn't connect to Compliance Center.  Exiting."
             exitScript
@@ -150,7 +150,7 @@ function createLabel
     $domainName = (Get-AcceptedDomain | ?{$_.Default -eq $true}).DomainName
     $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
     try {
-        $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction SilentlyContinue | Out-Null
+        $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
     } catch {
         logWrite 4 $false "Error creating label"
         exitScript
@@ -172,7 +172,7 @@ function createPolicy
     #>
 
     try {
-        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction SilentlyContinue | Out-Null
+        New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
     } catch {
         logWrite 5 $false "Error creating label policy"
         exitScript
