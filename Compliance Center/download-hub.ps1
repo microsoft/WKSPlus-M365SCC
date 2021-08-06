@@ -83,13 +83,13 @@ function checkModuleMSOL
 function connectExo
 {
     try {
-        Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
+        Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
     }
     catch {
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
-            Get-Command Set-Mailbox -ErrorAction Stop | Out-Null
+            Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
         } catch {
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
@@ -106,13 +106,13 @@ function connectExo
 function connectSCC
 {
     try {
-        Get-Command Set-Label -ErrorAction:Stop | Out-Null
+        Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
     }
     catch {
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
-            Get-Command Set-Label -ErrorAction:Stop | Out-Null
+            Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
         } catch {
             logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
@@ -130,13 +130,13 @@ function connectSCC
 function ConnectMsolService
 {
     try {
-        Get-MsolDomain -ErrorAction Stop
+        $testConnection = Get-MsolDomain -ErrorAction SilentlyContinue | out-null
     }
     catch {
         Write-Host "Connecting to msol Service..."
         Connect-MsolService
         try {
-        $testContact = Get-MsolContact -ErrorAction Stop | Out-Null
+        $testContact = Get-MsolContact -ErrorAction SilentlyContinue | Out-Null
         } catch {
             logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
