@@ -36,7 +36,7 @@ function recovery
     $global:recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)
-    Write-Debug "Last Entry: $lastEntry"
+    Write-Debug "Last Entry #: $lastEntry"
     $lastEntry2 = (($savedLog.Count) - 2)
     Write-Debug "Entry Before Last: $lastEntry2"
     $lastEntryPhase = [int]$savedLog[$lastEntry].Phase
@@ -66,8 +66,8 @@ function checkModule
     try {
         $testModule = Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue"
-        Write-Debug $testModule
     } catch {
+        write-Debug $error[$error.Count-1]
         logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
         exit
     }
@@ -81,8 +81,8 @@ function checkModuleMSOL
     try {
         $testModule = Get-Command Connect-MsolService -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Connect-MsolService -ErrorAction SilentlyContinue"
-        Write-Debug $testModule
     } catch {
+        write-Debug $error[$error.Count-1]
         logWrite 2 $false "MSOL module is not installed! Exiting."
         exit
     }
@@ -96,16 +96,17 @@ function connectExo
     try {
         $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
         Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
-        Write-Debug $testConnection
     }
     catch {
+        write-Debug $error[$error.Count-1]
         Write-Host "Connecting to Exchange Online..."
         Connect-ExchangeOnline
         try {
             $testConnection = Get-Command Set-Mailbox -ErrorAction SilentlyContinue | Out-Null
             Write-Debug "Get-Command Set-Mailbox -ErrorAction SilentlyContinue"
-            Write-Debug $testConnection
+
         } catch {
+            write-Debug $error[$error.Count-1]
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
