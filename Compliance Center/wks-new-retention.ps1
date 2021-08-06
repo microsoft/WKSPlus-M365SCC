@@ -5,7 +5,6 @@ $global:nextPhase = 1
 $global:recovery = $false
 ################ Site Variables ###################
 $siteName = "wks-compliance-center-test-jorg-01"
-$siteOwner = "" #need to set this after we connect to msonline
 $siteStorageQuota = 1024
 $siteResourceQuota = 1024
 $siteTemplate = "STS#3"
@@ -15,6 +14,7 @@ $retentionTagComment = "Keep and delete tag - 3 Days"
 $retentionTagAction = "KeepAndDelete"
 $retentionTagDuration = 3
 $retentionTagType = "ModificationAgeInDays"
+$isRecordLabel = $false
 ################ Policy Variables ###################
 $retentionPolicyName = "WKS-Compliance-policy-test-jorg-01"
 
@@ -59,7 +59,7 @@ function recovery
     if ($lastEntryResult -eq $false){
         if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase){
             WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  PLease check with your instructor."
-            exit
+            exitScript
         } else {
             Write-Host "There was a problem with Phase $lastEntryPhase, so trying again...."
             $global:nextPhase = $lastEntryPhase
@@ -84,20 +84,19 @@ function connectSCC
 {
     try {
         Get-Command Set-Label -ErrorAction:Stop | Out-Null
-    }
-    catch {
+    } catch {
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
             Get-Command Set-Label -ErrorAction:Stop | Out-Null
         } catch {
-            logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
-            exit
+            logWrite 1 $false "Couldn't connect to Compliance Center.  Exiting."
+            exitScript
         }
-        if($global:recovery -eq $false){
-            logWrite 4 $true "Successfully connected to Compliance Center"
-            $global:nextPhase++
-        }
+    }
+    if($global:recovery -eq $false){
+        logWrite 1 $true "Connected to Compliance Center"
+        $global:nextPhase++
     }
 }
 
@@ -112,13 +111,28 @@ function ConnectMsolService
         try {
         $testContact = Get-MsolContact -ErrorAction Stop | Out-Null
         } catch {
-            logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
-            exit
+            logWrite 2 $false "Couldn't connect to MSOL Service.  Exiting."
+            exitScript
         }
-        if($global:recovery -eq $false){
-            logWrite 5 $true "Successfully connected to MSOL Service"
-            $global:nextPhase++
-        }
+    }
+    if($global:recovery -eq $false){
+        logWrite 2 $true "Successfully connected to MSOL Service"
+        $global:nextPhase++
+    }
+}
+
+function getSiteOwner
+{
+    # shoudl be connected to MSOL Service to set site owner
+    $siteOwner = (Get-MsolUser -ErrorAction Silent | ?{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
+    #then verify
+    if($siteOwner -eq $null){
+        logWrite 3 $false "Failed to get or set siteOwner variable."
+        exitScript
+    } else {
+        logWrite 3 $true "siteOwner set as $siteOwner"
+        $global:nextPhase++
+        return $siteOwner
     }
 }
 
@@ -131,10 +145,10 @@ Function getdomain
     try{
         $InitialDomain = Get-MsolDomain | Where-Object {$_.IsInitial -eq $true}
    }catch {
-        logWrite 6 $false "unable to fetch all accepted Domains."
-        exit
+        logWrite 4 $false "unable to fetch all accepted Domains."
+        exitScript
     }
-    logWrite 6 $True "Able to get all accepted Domains."
+    logWrite 4 $True "Able to get all accepted Domains."
     $global:nextPhase++
     return $InitialDomain.name.split(".")[0]
 }
@@ -147,10 +161,10 @@ function connectspo([string]$tenantName)
         Connect-sposervice -Url $AdminURL
         }
         catch {
-            logWrite 7 $false "Unable to create the SharePoint Website."
-            exit
+            logWrite 5 $false "Unable to create the SharePoint Website."
+            exitScript
         }
-        logWrite 7 $True "Able to create the SharePoint Website."
+        logWrite 5 $True "Able to create the SharePoint Website."
         $global:nextPhase++
   
 }
@@ -158,107 +172,95 @@ function connectspo([string]$tenantName)
 function connectpnp([string]$tenantName)
 {
     $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
-    # add try/catch
-    Connect-PnpOnline -Url $connectionURL -useWebLogin
+    Try
+    {
+        Connect-PnpOnline -Url $connectionURL -useWebLogin
+    } catch {
+        logWrite 6 $false "Failed to connect to PnP Powershell for $connectionURL"
+        exitScript
+    }
+    logWrite 6 $true "Connected successfully to PnP Powershell for $connectionURL"
+    $global:nextPhase++
 }
 
 # ------------------------------
 # Create Sharepoint Online Site
 # ------------------------------
-function createSPOSite([string]$tenantName)
+function createSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
-    param
-      (
-          [string]$Title  = "wks-compliance-center-test-jorg-01",
-          [string]$URL = "https://$global:sharepoint.sharepoint.com/sites/wks-compliance-center-test-jorg-01",
-          [string]$Owner = "adm-jorg@myjorg.be",
-          [int]$StorageQuota = "1024",
-          [int]$ResourceQuota = "1024",
-          [string]$Template = "STS#3"
-      )
-   
-  #Connection parameters 
-  $AdminURL = "https://$global:Sharepoint-admin.sharepoint.com"
-   
-  Try{
-      #Connect to Office 365
-      Connect-sposervice -Url $AdminURL
-      
-
-             #sharepoint online create site collection powershell
-          $spoSiteCreationStatus = New-spoSite -Url $URL -title $Title -Owner $Owner -StorageQuota $StorageQuota -ResourceQuota $ResourceQuota -Template $Template | Out-Null
-          #write-host "Site Collection $($url) Created Successfully!" -foregroundcolor Green
-      }
-  catch {
-          logWrite 2 $false "Unable to create the SharePoint Website."
-          exit
-      }
-      logWrite 2 $True "Able to create the SharePoint Website."
-      $global:nextPhase++
+    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+    Try{
+        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate | Out-Null
+        } catch {
+            logWrite 7 $false "Unable to create the SharePoint site $siteName."
+            exitScript
+        }
+        logWrite 7 $True "$siteName site created successfully."
+        $global:nextPhase++
 }
 
 # -------------------
 # Create Compliance Tag
 # -------------------
-Function CreateComplianceTag
+Function CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
     try {
-        #get-compliancetag -Identity "$global:name" 
-        #Write-Host "The Compliance Tag already Exists!" -ForegroundColor red
-        complianceTagStatus = new-ComplianceTag -Name "$global:name" -Comment 'Keep and delete tag - 3 Days' -IsRecordLabel $false -RetentionAction "$global:retentionaction" -RetentionDuration "$global:retentionduration" -RetentionType ModificationAgeInDays | Out-Null
-        
-     }
-
-     catch {
-        logWrite 3 $false "unable to create Retention Tag"
-        exit
+        complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
+        } catch {
+        logWrite 8 $false "Unable to create Retention Tag $retentionTagName"
+        exitScript
     }
-    logWrite 3 $True "Able to Create Retention Tag."
+    logWrite 8 $True "Retention Tag $retentionTagName created successfully."
     $global:nextPhase++
-
 }
 
 
 # -------------------
 # Create Retention Policy
 # -------------------
-function NewRetentionPolicy
+function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
+    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+
+    #try to create policy first
     Try
     {
-     
-       #Create compliance retention Policy
-          New-RetentionCompliancePolicy -Name "$global:Policy" -SharePointLocation "https://$global:Sharepoint.sharepoint.com/sites/WKS-compliance-center-test-jorg-01" -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All
-          New-RetentionComplianceRule -Policy "$global:Policy" -publishComplianceTag "$global:name"
-          write-host "Retention policy and rule are Created Successfully!" -foregroundcolor Green
-      
-  }
-  catch {
-          logWrite 4 $false "Unable to create the Retention Policy and Rule."
-          exit
-      }
-      logWrite 4 $True "The Retention policy and rule has been created."
-      $global:nextPhase++
+        #Create compliance retention Policy
+        $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All | Out-Null
+    } catch {
+        #failed to create policy
+        logWrite 9 $false "Unable to create the Retention Policy $retentionPolicyName"
+        exitScript
+    }
+    
+    #then, if successfull, create rule in policy
+    try {
+        $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName | Out-Null
+    }
+    catch {
+         #failed to create policy
+         logWrite 9 $false "Unable to create the Retention Policy Rule."
+         exitScript
+    }
+    
+    #if successful, move on
+    logWrite 9 $True "Retention Policy $retentionPolicyName and Rule created successfully."
+    $global:nextPhase++
 }
 
-
-
-function setlabelsposite
+function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
+    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
     #sleep for 240 seconds
-    
     goToSleep 240
 
     try{
-        connect-pnponline -url "https://M365x576146.sharepoint.com/sites/wks-compliance-center-test-jorg-01" -useWebLogin
-        
-        Set-PnPLabel -List "Shared Documents" -Label $global:name -SyncToItems $true
+        Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true
+    } catch {
+        logWrite 10 $false "Unable to set the Retention label to $URL."
+        exitScript
     }
-    catch {
-        logWrite 5 $false "Unable to set the Retention label to $URL."
-        exit
-    }
-    logWrite 5 $True "Able to set the Retention label to $URL."
+    logWrite 10 $True "Able to set the Retention label to $URL."
     $global:nextPhase++
 }
 
@@ -266,9 +268,11 @@ function setlabelsposite
 function exitScript
 {
     Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully."
+    exit
 }
+
 ################ main Script start ###################
+Write-Host "Starting Retention Script...."
 
 if(!(Test-Path($logCSV))){
     # if log doesn't exist then must be first time we run this, so go to initialization
@@ -276,35 +280,56 @@ if(!(Test-Path($logCSV))){
 } else {
     # if log already exists, check if we need to recover#
     recovery
-    getdomain
-    createSPOSite
-    CreateComplianceTag
-    NewRetentionPolicy
-    setlabelsposite
+    connectSCC
+    ConnectMsolService
+    $siteOwner = getSiteOwner
+    $tenantName = getdomain
+    connectspo $tenantName
+    connectpnp $tenantName
 }
 
 #use variable to control phases
 
 if($nextPhase -eq 1){
-getdomain
+    connectSCC
 }
 
 if($nextPhase -eq 2){
-createSPOSite
+    ConnectMsolService
 }
 
-if ($nextPhase -eq 3){
-CreateComplianceTag
+if($nextPhase -eq 3){
+    $siteOwner = getSiteOwner
 }
 
-if ($nextPhase -eq 4){
-NewRetentionPolicy
+if($nextPhase -eq 4){
+    $tenantName = getdomain
 }
 
-if ($nextPhase -eq 5){
-setlabelsposite
+if($nextPhase -eq 5){
+    connectspo $tenantName
 }
 
-if ($nextPhase -eq 6){
+if($nextPhase -eq 6){
+    connectpnp $tenantName
+}
+
+if($nextPhase -eq 7){
+    createSPOSite $tenantName $siteName $siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
+}
+
+if ($nextPhase -eq 8){
+    CreateComplianceTag $retentionTagName $retentionTagComment $isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
+}
+
+if ($nextPhase -eq 9){
+    NewRetentionPolicy $retentionPolicyName $tenantName $siteName $retentionTagName
+}
+
+if ($nextPhase -eq 10){
+    setlabelsposite $tenantName $siteName $retentionTagName
+}
+
+if ($nextPhase -eq 11){
 exitScript
 }
