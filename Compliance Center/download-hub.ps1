@@ -109,14 +109,12 @@ function connectExo
             logWrite 3 $false "Couldn't connect to Exchange Online.  Exiting."
             exit
         }
-        Write-Debug "Connected to Exchange Online"
-        if($global:recovery -eq $false){
-            logWrite 3 $true "Successfully connected to Exchange Online"
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
     }
-    Write-Debug "Connected to Exchange Online"
+    if($global:recovery -eq $false){
+        logWrite 3 $true "Successfully connected to Exchange Online"
+        $global:nextPhase++
+        Write-Debug "nextPhase set to $global:nextPhase"
+    }
 }
 # ----------------------------------------
 # Connect to Microsoft Compliance center
@@ -139,12 +137,11 @@ function connectSCC
             logWrite 4 $false "Couldn't connect to Compliance Center.  Exiting."
             exit
         }
-        if($global:recovery -eq $false){
-            logWrite 4 $true "Successfully connected to Compliance Center"
-            $global:nextPhase++
-        }
     }
-    Write-Debug "Connected to SCC"
+    if($global:recovery -eq $false){
+        logWrite 4 $true "Successfully connected to Compliance Center"
+        $global:nextPhase++
+    }
 }
 
 # ------------------------------------
@@ -164,10 +161,10 @@ function ConnectMsolService
             logWrite 5 $false "Couldn't connect to MSOL Service.  Exiting."
             exit
         }
-        if($global:recovery -eq $false){
-            logWrite 5 $true "Successfully connected to MSOL Service"
-            $global:nextPhase++
-        }
+    }
+    if($global:recovery -eq $false){
+        logWrite 5 $true "Successfully connected to MSOL Service"
+        $global:nextPhase++
     }
 }
 
@@ -208,7 +205,6 @@ function connectspo([string]$tenantName)
             logWrite 7 $True "Able to create the SharePoint Website."
             $global:nextPhase++
         }
-  
 }
 
 function downloadscriptlabel
