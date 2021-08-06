@@ -1,6 +1,5 @@
 ﻿Param (
-    [switch]$debug,
-    [switch]$transcriptEnabled
+    [switch]$debug
 )
 
 ################ Define Variables ###################
@@ -23,9 +22,7 @@ $oldDebugPreference = $DebugPreference
 if($debug){
     write-debug "Debug Enabled"
     $DebugPreference = "Continue"
-    if(!$transcriptEnabled){
-        Start-Transcript -Path "$($LogPath)sensitivitylabel-debug.txt"
-    }
+    Start-Transcript -Path "$($LogPath)sensitivitylabel-debug.txt"
 }
 
 ################ Functions ###################
@@ -229,7 +226,8 @@ if ($nextPhase -ge 6){
     $nextScript = $LogPath + "./wks-new-retention.ps1"
     logwrite 6 $true "Launching $nextScript"
     if ($debug){
-        .$nextScript -$debug -$transcriptEnabled
+        Stop-Transcript
+        .$nextScript -$debug
     } else {
         .$nextScript
     }

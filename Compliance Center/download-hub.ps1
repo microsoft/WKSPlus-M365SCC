@@ -340,7 +340,7 @@ if($nextPhase -eq 5){
 if($nextPhase -eq 6){
     write-debug "Phase $nextPhase"
     $tenantName = getdomain
-    write-script "$tenantName Returned"
+    write-debug "$tenantName Returned"
 }
 
 if($nextPhase -eq 7){
@@ -368,7 +368,8 @@ if ($nextPhase -ge 11){
     $nextScript = $LogPath + "wks-new-label.ps1"
     logWrite 11 $true "Launching $nextScript"
     if ($debug){
-        .$nextScript -$debug -$transcriptEnabled
+        Stop-Transcript
+        .$nextScript -$debug
     } else {
         .$nextScript
     }

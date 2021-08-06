@@ -1,6 +1,5 @@
 Param (
-    [switch]$debug,
-    [switch]$transcriptEnabled
+    [switch]$debug
 )
 
 ################ Standard Variables ###################
@@ -28,9 +27,7 @@ $oldDebugPreference = $DebugPreference
 if($debug){
     write-debug "Debug Enabled"
     $DebugPreference = "Continue"
-    if(!$transcriptEnabled){
-        Start-Transcript -Path "$($LogPath)retention-debug.txt"
-    }
+    Start-Transcript -Path "$($LogPath)retention-debug.txt"
 }
 
 
@@ -232,7 +229,7 @@ Function CreateComplianceTag([string]$retentionTagName, [string]$retentionTagCom
     try {
         $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
         } catch {
-        write-Debug Error[0].Exception
+        write-Debug $Error[0].Exception
         logWrite 8 $false "Unable to create Retention Tag $retentionTagName"
         exitScript
     }
@@ -255,7 +252,7 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
         $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
     } catch {
         #failed to create policy
-        write-Debug Error[0].Exception
+        write-Debug $Error[0].Exception
         logWrite 9 $false "Unable to create the Retention Policy $retentionPolicyName"
         exitScript
     }
@@ -266,26 +263,28 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
     }
     catch {
          #failed to create policy
-         write-Debug Error[0].Exception
+         write-Debug $Error[0].Exception
          logWrite 9 $false "Unable to create the Retention Policy Rule."
          exitScript
     }
     
     #if successful, move on
     logWrite 9 $True "Retention Policy $retentionPolicyName and Rule created successfully."
+    
+    #sleep for 240 seconds
+    goToSleep 240
     $global:nextPhase++
 }
 
 function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
     $url = "https://$tenantName.sharepoint.com/sites/$siteName"
-    #sleep for 240 seconds
-    goToSleep 240
 
     try{
+        write-debug "Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true -ErrorAction Stop"
         Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true -ErrorAction Stop
     } catch {
-        write-Debug Error[0].Exception
+        write-Debug $Error[0].Exception
         logWrite 10 $false "Unable to set the Retention label to $URL."
         exitScript
     }
@@ -294,7 +293,7 @@ function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retent
 }
 
 
-function exitScript
+function exitScriptGet-
 {
     # Get-PSSession | Remove-PSSession
     if ($debug){
