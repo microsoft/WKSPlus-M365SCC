@@ -236,16 +236,11 @@ if(!(Test-Path($logCSV))){
 } else {
     # if log already exists, check if we need to recover
     recovery
-    checkModule
-    checkModuleMSOL
     connectExo
     connectSCC
     ConnectMsolService
     getdomain
     connectspo
-    downloadscriptlabel
-    downloadscriptDLP
-    downloadscriptRetention
 }
 
 #use variable to control phases
