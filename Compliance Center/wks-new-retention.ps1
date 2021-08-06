@@ -83,12 +83,12 @@ function goToSleep ([int]$seconds){
 function connectSCC
 {
     try {
-        Get-Command Set-Label -ErrorAction:Stop | Out-Null
+        Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
     } catch {
         Write-Host "Connecting to Compliance Center..."
         Connect-IPPSSession
         try {
-            Get-Command Set-Label -ErrorAction:Stop | Out-Null
+            Get-Command Set-Label -ErrorAction:SilentlyContinue | Out-Null
         } catch {
             logWrite 1 $false "Couldn't connect to Compliance Center.  Exiting."
             exitScript
@@ -103,13 +103,13 @@ function connectSCC
 function ConnectMsolService
 {
     try {
-        $testConnection = Get-MsolDomain -ErrorAction Stop
+        $testConnection = Get-MsolDomain -ErrorAction SilentlyContinue
     }
     catch {
         Write-Host "Connecting to msol Service..."
         Connect-MsolService
         try {
-        $testContact = Get-MsolContact -ErrorAction Stop | Out-Null
+        $testContact = Get-MsolContact -ErrorAction SilentlyContinue | Out-Null
         } catch {
             logWrite 2 $false "Couldn't connect to MSOL Service.  Exiting."
             exitScript
@@ -161,7 +161,7 @@ function connectspo([string]$tenantName)
 {
     $AdminURL = "https://$tenantName-admin.sharepoint.com"
     Try{
-        $testConnection = Get-SpoSite -ErrorAction Stop | Out-Null
+        $testConnection = Get-SpoSite -ErrorAction SilentlyContinue | Out-Null
     } catch {
         Try{
         #Connect to Office 365
