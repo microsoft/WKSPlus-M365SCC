@@ -58,7 +58,7 @@ function recovery
 function checkModule
 {
     try {
-        Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null
+        Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue | Out-Null
     } catch {
         logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting."
         exit
@@ -70,7 +70,7 @@ function checkModule
 function checkModuleMSOL
 {
     try {
-        Get-Command Connect-MsolService -ErrorAction Stop | Out-Null
+        Get-Command Connect-MsolService -ErrorAction SilentlyContinue | Out-Null
         
     } catch {
         logWrite 2 $false "MSOL module is not installed! Exiting."
