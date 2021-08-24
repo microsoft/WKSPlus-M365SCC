@@ -8,19 +8,19 @@ $LogCSV = "C:\temp\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 ################ Site Variables ###################
-$siteName = "wks-compliance-center-test-jorg-01"
+$siteName = "wks-compliance-center"
 $siteStorageQuota = 1024
 $siteResourceQuota = 1024
 $siteTemplate = "STS#3"
 ################ Tag Variables ###################
-$retentionTagName = "WKS-Compliance-Tag-test-jorg-01"
+$retentionTagName = "WKS-Compliance-Tag"
 $retentionTagComment = "Keep and delete tag - 3 Days"
 $retentionTagAction = "KeepAndDelete"
 $retentionTagDuration = 3
 $retentionTagType = "ModificationAgeInDays"
 $isRecordLabel = $false
 ################ Policy Variables ###################
-$retentionPolicyName = "WKS-Compliance-policy-test-jorg-01"
+$retentionPolicyName = "WKS-Compliance-policy"
 
 ###DEBUG###
 $oldDebugPreference = $DebugPreference
