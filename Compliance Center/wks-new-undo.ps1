@@ -4,7 +4,7 @@ Param (
 
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\LabelLog.csv"
+$LogCSV = "C:\temp\removelog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
@@ -183,7 +183,7 @@ function removeLabel
 }
 
 
-function createDLPComplianceRule
+function removeDLPComplianceRule
 {
     try{
         Get-DlpComplianceRule | Where-Object {$_.name -like "*wks*"} | remove-DlpComplianceRule
@@ -222,6 +222,7 @@ if(!(Test-Path($logCSV))){
     connectSCC
     removePolicy
     removeLabel
+    removeDLPComplianceRule
 }
 
 #use variable to control phases
@@ -246,6 +247,10 @@ if ($nextPhase -eq 5){
 removeLabel
 }
 
-if($nextPhase -eq 6){
+if ($nextPhase -eq 6){
+removeDLPComplianceRule
+}
+
+if($nextPhase -eq 7){
 exitScript
 }
