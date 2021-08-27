@@ -293,7 +293,7 @@ function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retent
 }
 
 
-function exitScriptGet-
+function exitScript
 {
     # Get-PSSession | Remove-PSSession
     if ($debug){

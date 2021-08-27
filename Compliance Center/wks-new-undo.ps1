@@ -186,7 +186,7 @@ function removeLabel
 function createDLPComplianceRule
 {
     try{
-       remove-DlpComplianceRule
+        Get-DlpComplianceRule | Where-Object {$_.name -like "*wks*"} | remove-DlpComplianceRule
         
     }
 
@@ -197,6 +197,7 @@ function createDLPComplianceRule
     logWrite 6 $True "Able to Create DLP Rule."
     $global:nextPhase++
 }
+
 
 
 function exitScript
