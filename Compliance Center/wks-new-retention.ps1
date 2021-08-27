@@ -276,6 +276,10 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
     $global:nextPhase++
 }
 
+
+####### need to review it on a later stage #########
+
+<#
 function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
     $url = "https://$tenantName.sharepoint.com/sites/$siteName"
@@ -292,7 +296,7 @@ function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retent
     $global:nextPhase++
 }
 
-
+#>
 function exitScript
 {
     # Get-PSSession | Remove-PSSession
