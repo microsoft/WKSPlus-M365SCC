@@ -366,6 +366,13 @@ if ($nextPhase -eq 10){
     setlabelsposite $tenantName $siteName $retentionTagName
 }
 
-if ($nextPhase -eq 11){
-exitScript
+if ($nextPhase -ge 11){
+    $nextScript = $LogPath + "./wks-new-dlp.ps1"
+    logwrite 11 $true "Launching $nextScript"
+    if ($debug){
+        Stop-Transcript
+        .$nextScript -$debug
+    } else {
+        .$nextScript
+    }
 }
