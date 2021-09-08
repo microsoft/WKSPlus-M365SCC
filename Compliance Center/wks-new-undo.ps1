@@ -199,6 +199,36 @@ function removeDLPComplianceRule
 }
 
 
+function removeretentionComplianceRule
+{
+    try{
+        Get-RetentionCompliancerule | Where-Object {$_.name -like "*wks*"} | remove-RetentionCompliancerule
+        
+    }
+
+    catch {
+        logWrite 7 $false "unable to remove Retention Compliance Rule."
+        exit
+    }
+    logWrite 7 $True "Able to remove Retention Compliance Rule."
+    $global:nextPhase++
+}
+
+function removeretentionCompliancepolicy
+{
+    try{
+        Get-RetentionCompliancePolicy | Where-Object {$_.name -like "*wks*"} | Remove-RetentionCompliancePolicy
+        
+    }
+
+    catch {
+        logWrite 8 $false "unable to remove Retention Compliance Policy."
+        exit
+    }
+    logWrite 8 $True "Able to remove Retention Compliance Policy."
+    $global:nextPhase++
+}
+
 
 function exitScript
 {
@@ -223,6 +253,9 @@ if(!(Test-Path($logCSV))){
     removePolicy
     removeLabel
     removeDLPComplianceRule
+    removeretentionComplianceRule
+    removeretentionCompliancepolicy
+
 }
 
 #use variable to control phases
@@ -249,6 +282,14 @@ removeLabel
 
 if ($nextPhase -eq 6){
 removeDLPComplianceRule
+}
+
+if ($nextPhase -eq 7){
+removeretentionComplianceRule    
+}
+
+if ($nextPhase -eq 8){
+removeretentionCompliancepolicy    
 }
 
 if($nextPhase -eq 7){

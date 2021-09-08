@@ -171,7 +171,7 @@ function createPolicy
     try {
         New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
     } catch {
-        logWrite 5 $false "Error creating label policy"
+        logWrite 5 $false "Error creating label policy ($error)"
         exitScript
     }
     logWrite 5 $true "Successfully created label policy"
