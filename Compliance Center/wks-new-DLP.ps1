@@ -118,10 +118,10 @@ function createDLPComplianceRule
         $Rulevalue = @{
             "Name" = "WKS-Copmpliance-Ruleset";
             "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver’s license and passport number.";
-            ‘Policy’ = ‘WKS Compliance Policy’;
-            ‘ContentContainsSensitiveInformation’=$senstiveinfo;
-            ‘AccessScope’=’NotInOrganization’;
-            ‘Disabled’=$false;
+            "Policy" = "WKS Compliance Policy";
+            "ContentContainsSensitiveInformation"=$senstiveinfo;
+            "AccessScope"= "NotInOrganization";
+            "Disabled" =$false;
             'ReportSeverityLevel'='High'
             }
             New-DlpComplianceRule @rulevalue 
