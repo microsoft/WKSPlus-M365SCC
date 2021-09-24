@@ -277,26 +277,6 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
 }
 
 
-####### need to review it on a later stage #########
-
-<#
-function setlabelsposite([string]$tenantName, [string]$siteName, [string]$retentionTagName)
-{
-    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
-
-    try{
-        write-debug "Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true -ErrorAction Stop"
-        Set-PnPLabel -List "Shared Documents" -Label $retentionTagName -SyncToItems $true -ErrorAction Stop
-    } catch {
-        write-Debug $Error[0].Exception
-        logWrite 10 $false "Unable to set the Retention label to $URL."
-        exitScript
-    }
-    logWrite 10 $True "Able to set the Retention label to $URL."
-    $global:nextPhase++
-}
-
-#>
 function exitScript
 {
     # Get-PSSession | Remove-PSSession
@@ -362,11 +342,7 @@ if ($nextPhase -eq 9){
     NewRetentionPolicy $retentionPolicyName $tenantName $siteName $retentionTagName
 }
 
-if ($nextPhase -eq 10){
-    setlabelsposite $tenantName $siteName $retentionTagName
-}
-
-if ($nextPhase -ge 11){
+if ($nextPhase -ge 10){
     $nextScript = $LogPath + "./wks-new-dlp.ps1"
     logwrite 11 $true "Launching $nextScript"
     if ($debug){
