@@ -133,7 +133,7 @@ Function RunTheConnector
         write-host "##################################################################" -ForegroundColor Green
         Write-Host
 
-        C:\windows\temp\HRConnector_upload.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
+        C:\temp\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
 
         Read-Host "Press ENTER to continue"
     }
