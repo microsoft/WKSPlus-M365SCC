@@ -268,7 +268,6 @@ function downloadscriptDLP
 
 function downloadscriptRetention
 {
-
     try{
         Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1 -ErrorAction Stop"
         Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1 -ErrorAction Stop
@@ -282,6 +281,39 @@ function downloadscriptRetention
     $global:nextPhase++
     Write-Debug "nextPhase set to $global:nextPhase"
 }
+
+function downloadscriptInsiderRisks01
+{
+    try{
+        Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile c:\temp\wks-new-HRConnector.ps1 -ErrorAction Stop"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile c:\temp\wks-new-HRConnector.ps1 -ErrorAction Stop
+    }
+    catch {
+        write-Debug $error[0].Exception
+        logWrite 11 $false "Unable to download the Script! Exiting."
+        exitScript
+    }
+    logWrite 11 $True "The Script has been downloaded ."
+    $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
+}
+
+function downloadscriptInsiderRisks02
+{
+    try{
+        Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile c:\temp\upload_termination_records.ps1-ErrorAction Stop"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile c:\temp\upload_termination_records.ps1 -ErrorAction Stop
+    }
+    catch {
+        write-Debug $error[0].Exception
+        logWrite 12 $false "Unable to download the Script! Exiting."
+        exitScript
+    }
+    logWrite 12 $True "The Script has been downloaded ."
+    $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
+}
+
 
 function exitScript
 {
@@ -361,6 +393,16 @@ if($nextPhase -eq 9){
 if($nextPhase -eq 10){
     write-debug "Phase $nextPhase"
     downloadscriptRetention
+}
+
+if($nextPhase -eq 11){
+    write-debug "Phase $nextPhase"
+    downloadscriptInsiderRisks01
+}
+
+if($nextPhase -eq 12){
+    write-debug "Phase $nextPhase"
+    downloadscriptInsiderRisks02
 }
 
 if ($nextPhase -ge 11){
