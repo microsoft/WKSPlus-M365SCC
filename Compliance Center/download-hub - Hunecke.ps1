@@ -407,8 +407,8 @@ if($nextPhase -eq 12){
 
 if ($nextPhase -ge 11){
     write-debug "Phase $nextPhase"
-    $nextScript = $LogPath + "wks-new-label.ps1"
-    logWrite 11 $true "Launching $nextScript"
+    #$nextScript = $LogPath + "wks-new-label.ps1"
+    #logWrite 11 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript
         .$nextScript -$debug
