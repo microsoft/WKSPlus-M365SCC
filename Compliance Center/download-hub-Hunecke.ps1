@@ -113,7 +113,7 @@ function connectExo
     } catch {
         write-Debug $error[0].Exception
         Write-Host "Connecting to Exchange Online..."
-        Connect-ExchangeOnline
+        Connect-ExchangeOnline -ShowBanner:$false
         try {
             Write-Debug "Get-Command Set-Mailbox -ErrorAction stop"
             $testConnection = Get-Command Set-Mailbox -ErrorAction stop | Out-Null
@@ -413,7 +413,7 @@ if ($nextPhase -ge 11){
     logWrite 11 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript
-        .$nextScript -$debug
+        $nextScript -$debug
     } else {
         $nextScript
     }
