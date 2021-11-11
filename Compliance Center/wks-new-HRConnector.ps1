@@ -15,7 +15,6 @@
 
 Function ConnectToAzureAD
     {
-        Import-Module AzureAD
         Connect-AzureAD -InformationAction SilentlyContinue | Out-Null
     }
 
