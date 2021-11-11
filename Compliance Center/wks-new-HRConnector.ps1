@@ -1,17 +1,14 @@
-   <#
-   .SYNOPSIS
-   Short description
-   
-   .DESCRIPTION
-   Long description
-   
-   .EXAMPLE
-   An example
-   
-   .NOTES
-   General notes
-   #>
+Param (
+    [switch]$debug
+)
 
+################ Define Variables ###################
+#$LogPath = "c:\temp\"
+#$LogCSV = "C:\temp\HRConnlog.csv"
+$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\HRConnlog.csv"
+$global:nextPhase = 1
+$global:recovery = $false
 
 Function ConnectToAzureAD
     {
@@ -64,7 +61,7 @@ Function GenerateTheCSV
         Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
         write-host
 
-        $global:HRConnectorCSVFile = ".\HRConnector.csv"
+        $global:HRConnectorCSVFile = "$($LogPath)wks-new-HRConnector.csv"
         "HRScenarios,EmailAddress,ResignationDate,LastWorkingDate,EffectiveDate,YearsOnLevel,OldLevel,NewLevel,PerformanceRemarks,PerformanceRating,ImprovementRemarks,ImprovementRating" | out-file $HRConnectorCSVFile -Encoding utf8
         $Users = Get-AzureADuser | where-object {$null -ne $_.AssignedLicenses} | Select-Object UserPrincipalName
 
@@ -132,7 +129,7 @@ Function RunTheConnector
         write-host "##################################################################" -ForegroundColor Green
         Write-Host
 
-        C:\temp\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
+        "$($LogPath)upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile"
 
         Read-Host "Press ENTER to continue"
     }
@@ -160,15 +157,15 @@ if ($answer -eq "y")
         Write-Host
         CreateAzureapp #Call the function
         Write-Host
-        Read-Host "Press ENTER to continue"
+        $answ = Read-Host "Press ENTER to continue"
         Write-Host
         GenerateTheCSV #call the function
         Write-Host
-        Read-Host "Press ENTER to continue"
+        $answ = Read-Host "Press ENTER to continue"
         Write-Host
         RunTheConnector #call the function
         Write-Host
-        Read-Host "Press ENTER to continue"
+        $answ = Read-Host "Press ENTER to continue"
         Write-Host
     }
 
