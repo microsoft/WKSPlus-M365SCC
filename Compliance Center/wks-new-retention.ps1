@@ -3,8 +3,10 @@ Param (
 )
 
 ################ Standard Variables ###################
-$LogPath = "c:\temp\"
-$LogCSV = "C:\temp\retentionlog.csv"
+#$LogPath = "c:\temp\"
+#$LogCSV = "C:\temp\retentionlog.csv"
+$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\retentionlog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 ################ Site Variables ###################

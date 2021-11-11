@@ -1,6 +1,8 @@
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\DLPLog.csv"
+$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\dlplog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 

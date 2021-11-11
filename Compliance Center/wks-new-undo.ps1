@@ -5,6 +5,8 @@ Param (
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\removelog.csv"
+$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\removelog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
