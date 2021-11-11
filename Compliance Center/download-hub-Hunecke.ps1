@@ -38,7 +38,7 @@ function initialization
     {
         New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
     }
-        cd $LogPath
+        Set-Location -Path $LogPath
         Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
         logWrite 0 $true "Initialization completed"
 }
@@ -46,7 +46,7 @@ function initialization
 function recovery
 {
     Write-host "Starting recovery..."
-    cd $LogPath
+    Set-Location -Path $LogPath
     $global:recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)

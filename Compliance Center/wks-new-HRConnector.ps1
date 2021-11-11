@@ -53,7 +53,7 @@ Function GenerateTheCSV
         write-host "##                                                              ##" -ForegroundColor Green
         write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
         write-host "##                                                              ##" -ForegroundColor Green
-        write-host "##   The CSV file was created on $CurrentPath\HRConnector.csv" -ForegroundColor Green
+        write-host "##   The CSV file was created on $CurrentPath\wks-new-HRConnector.csv" -ForegroundColor Green
         write-host "##                                                              ##" -ForegroundColor Green
         write-host "##################################################################" -ForegroundColor Green
         write-host
@@ -124,14 +124,13 @@ Function RunTheConnector
         write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
         write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
         write-host "##   JobId     : $ConnectorJobID           ##" -ForegroundColor Green
-        write-host "##   CSV File  : $global:HRConnectorCSVFile           ##" -ForegroundColor Green
+        write-host "##   CSV File  : $global:HRConnectorCSVFile           " -ForegroundColor Green
         write-host "##                                                              ##" -ForegroundColor Green
         write-host "##################################################################" -ForegroundColor Green
         Write-Host
 
-        "$($LogPath)upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile"
-
-        Read-Host "Press ENTER to continue"
+        Set-Location -Path "$env:UserProfile\Desktop\SCLabFiles\Scripts"
+        .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
     }
 
 #Script starts here
