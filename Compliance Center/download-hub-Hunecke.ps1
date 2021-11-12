@@ -109,7 +109,7 @@ function ConnectAzureAD
             {
                 write-Debug $error[0].Exception
                 Write-Host "Connecting to Azure AD..."
-                Connect-MsolService
+                Connect-AzureAD
                 try 
                     {
                         Write-Debug "Get-Command Connect-AzureAD -ErrorAction stop"
