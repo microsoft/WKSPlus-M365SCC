@@ -84,8 +84,6 @@ function recovery
 # -----------------------------------------------------------
 function initialization
 {
-    write-host $nextPhase -ForegroundColor red
-    
     $pathExists = Test-Path($LogPath)
     if (!$pathExists)
         {
@@ -94,8 +92,6 @@ function initialization
         Set-Location -Path $LogPath
         Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
         logWrite 0 $true "Initialization completed"
-
-        write-host $nextPhase -ForegroundColor red
 }
 
 # -----------------------------------------------------------
@@ -191,8 +187,6 @@ function ConnectMsol
 # -----------------------------------------------------------
 function ConnectEXO
 {
-    write-host "Exchange Online - Step 3"
-    write-host $nextPhase -ForegroundColor red
     try 
     {
         Write-Debug "Get-OrganizationConfig -ErrorAction stop"
@@ -521,7 +515,8 @@ if($nextPhase -eq 8)
 if ($nextPhase -ge 9)
     {
         write-debug "Phase $nextPhase"
-        $nextScript = $LogPath + "wks-new-label.ps1"
+        Set-Location -Path $LogPath
+        $nextScript = "wks-new-label.ps1"
         logWrite 9 $true "Launching $nextScript"
         if ($debug)
             {
