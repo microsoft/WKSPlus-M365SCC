@@ -112,7 +112,7 @@ function ConnectAzureAD
                 Connect-MsolService
                 try 
                     {
-                        Write-Debug "Get-Command Get-AzureAD -ErrorAction stop"
+                        Write-Debug "Get-Command Connect-AzureAD -ErrorAction stop"
                         $testConnection = Get-Command Get-AzureAD -ErrorAction stop | Out-Null
                     } 
                     catch 
@@ -123,7 +123,7 @@ function ConnectAzureAD
                             Connect-AzureAD
                             try 
                                 {
-                                    Write-Debug "Get-Command Get-AzureAD -ErrorAction stop"
+                                    Write-Debug "Get-Command Connect-AzureAD -ErrorAction stop"
                                     $testConnection = Get-Command Get-AzureAD -ErrorAction stop | Out-Null
                                 }
                                 catch
