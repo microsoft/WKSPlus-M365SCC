@@ -525,7 +525,7 @@ if ($nextPhase -ge 9)
             } 
             else 
                 {
-                    write-host "$nextScript"
+                    write-host $nextScript
                     .\$nextScript
                 }
     }
