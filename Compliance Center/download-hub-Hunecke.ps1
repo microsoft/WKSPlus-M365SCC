@@ -102,29 +102,25 @@ function ConnectAzureAD
 {
     try 
         {
-            Write-Debug "Get-Command Get-AzureAD -ErrorAction stop"
-            $testConnection = Get-Command Get-AzureAD -ErrorAction stop | Out-Null
+            Write-Debug "Get-AzureADDirectoryRole -ErrorAction stop"
+            $testConnection = Get-AzureADDirectoryRole -ErrorAction stop | Out-Null #if true (Already Connected)
         }
         catch
             {
-                write-Debug $error[0].Exception
-                Write-Host "Connecting to Azure AD..."
-                Connect-AzureAD
-                try 
+                try
                     {
-                        Write-Debug "Get-Command Connect-AzureAD -ErrorAction stop"
-                        $testConnection = Get-Command Get-AzureAD -ErrorAction stop | Out-Null
-                    } 
-                    catch 
+                        write-Debug $error[0].Exception
+                        Write-Host "Connecting to Azure AD..."
+                        Connect-AzureAD -ErrorAction stop | Out-Null
+                    }
+                    catch    
                         {
-                            write-Debug $error[0].Exception
-                            Write-Host "Installing Azure AD PowerShell Module..."
-                            Install-Module AzureAD -Force -AllowClobber
-                            Connect-AzureAD
-                            try 
+                            try
                                 {
-                                    Write-Debug "Get-Command Connect-AzureAD -ErrorAction stop"
-                                    $testConnection = Get-Command Get-AzureAD -ErrorAction stop | Out-Null
+                                    write-Debug $error[0].Exception
+                                    Write-Host "Installing Azure AD PowerShell Module..."
+                                    Install-Module AzureAD -Force -AllowClobber
+                                    Connect-AzureAD -ErrorAction stop | Out-Null
                                 }
                                 catch
                                     {
@@ -135,6 +131,7 @@ function ConnectAzureAD
                        
                         }
             }
+
     if($global:recovery -eq $false)
         {
             logWrite 1 $true "Successfully connected to Azure AD."
