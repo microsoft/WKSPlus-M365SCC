@@ -517,7 +517,7 @@ if ($nextPhase -ge 9)
         write-debug "Phase $nextPhase"
         Set-Location -Path $LogPath
         $nextScript = "wks-new-label.ps1"
-        logWrite 9 $true "Launching $nextScript"
+        logWrite 9 $true "Launching $nextScript script"
         if ($debug)
             {
                 Stop-Transcript
@@ -525,6 +525,7 @@ if ($nextPhase -ge 9)
             } 
             else 
                 {
-                .\$nextScript
+                    write-host "$nextScript"
+                    .\$nextScript
                 }
     }
