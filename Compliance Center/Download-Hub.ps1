@@ -103,7 +103,6 @@ function initialization
 # -----------------------------------------------------------
 function ConnectAzureAD
 {
-    write-host $nextPhase -ForegroundColor red
     try 
         {
             Write-Debug "Get-AzureADDirectoryRole -ErrorAction stop"
@@ -192,6 +191,8 @@ function ConnectMsol
 # -----------------------------------------------------------
 function ConnectEXO
 {
+    write-host "Exchange Online - Step 3"
+    write-host $nextPhase -ForegroundColor red
     try 
     {
         Write-Debug "Get-OrganizationConfig -ErrorAction stop"
