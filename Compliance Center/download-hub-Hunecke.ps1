@@ -515,6 +515,7 @@ if(!(Test-Path($logCSV)))
                 ConnectMSOL
                 ConnectEXO
                 ConnectSCC
+                ConnectTeams
                 $tenantName = GetDomain
                 Write-Debug "$tenantName Returned"
                 ConnectSPO $tenantName
@@ -550,7 +551,7 @@ if($nextPhase -eq 4)
 if($nextPhase -eq 5)
     {
         write-debug "Phase $nextPhase"
-        #ConnectMsolService
+        ConnectTeams
     }
 
 if($nextPhase -eq 6)
