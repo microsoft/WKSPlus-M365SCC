@@ -6,7 +6,7 @@
 #$LogPath = "c:\temp\"
 #$LogCSV = "C:\temp\labellog.csv"
 $LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
-$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\labellog.csv"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Label_Log.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 

@@ -6,7 +6,7 @@ Param (
 # Variable definition
 # -----------------------------------------------------------
 $LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
-$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\download1.csv"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Download_Log.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
