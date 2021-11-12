@@ -521,11 +521,10 @@ if ($nextPhase -ge 9)
         if ($debug)
             {
                 Stop-Transcript
-                .\$nextScript -$debug
+                .\wks-new-label.ps1 -$debug
             } 
             else 
                 {
-                    write-host $nextScript
-                    .\$nextScript
+                    .\wks-new-label.ps1
                 }
     }
