@@ -5,8 +5,6 @@ Param (
 # -----------------------------------------------------------
 # Variable definition
 # -----------------------------------------------------------
-#$LogPath = "c:\temp\"
-#$LogCSV = "C:\temp\download1.csv"
 $LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
 $LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\download1.csv"
 $global:nextPhase = 1
@@ -16,7 +14,8 @@ $global:recovery = $false
 # DEBUG
 # -----------------------------------------------------------
 $oldDebugPreference = $DebugPreference
-if($debug){
+if($debug)
+{
     write-debug "Debug Enabled"
     $DebugPreference = "Continue"
     Start-Transcript -Path "$($LogPath)download-debug.txt"
@@ -378,7 +377,7 @@ Function getdomain
     Write-Debug "Initial domain: $InitialDomain"
     if($global:recovery -eq $false)
         {
-            logWrite 7 $True "Able to get all accepted domains."
+            logWrite 7 $True "Successfully got the accepted domains."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
@@ -386,103 +385,42 @@ Function getdomain
 }
 
 # -------------------------------------------------------
-# Download Labels PowerSell Script (Step 8)
+# Download Workshop Script (Step 8)
 # -------------------------------------------------------
-function downloadscriptlabel
+function downloadscripts
 {
     try
         {
+            #General scripts
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/Update-Hub.ps1 -OutFile "$($LogPath)Update-Hub.ps1" -ErrorAction Stop
+            #Labels scritp
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile $($LogPath)wks-new-label.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile "$($LogPath)wks-new-label.ps1" -ErrorAction Stop
-        } 
-        catch 
-            {
-                write-Debug $error[0].Exception
-                logWrite 8 $false "Unable to download the script! Exiting."
-                exitScript
-            }
-    if($global:recovery -eq $false)
-        {
-            logWrite 8 $True "The script has been downloaded."
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
-}       
-
-# -------------------------------------------------------
-# Download DLP PowerSell Script (Step 9)
-# -------------------------------------------------------
-function downloadscriptDLP
-{
-    try
-        {
+            #DLP Script
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile $($LogPath)wks-new-DLP.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile "$($LogPath)wks-new-DLP.ps1" -ErrorAction Stop
-        } 
-        catch 
-            {
-                write-Debug $error[0].Exception
-                logWrite 9 $false "Unable to download the script! Exiting."
-                exitScript
-            }
-    if($global:recovery -eq $false)
-        {
-            logWrite 9 $True "The script has been downloaded."
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
-}
-
-# -------------------------------------------------------
-# Download Retention PowerSell Script (Step 10)
-# -------------------------------------------------------
-function downloadscriptRetention
-{
-    try
-        {
+            #Retention script
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile $($LogPath)wks-new-retention.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile "$($LogPath)wks-new-retention.ps1" -ErrorAction Stop
-        }
-        catch 
-            {
-            write-Debug $error[0].Exception
-            logWrite 10 $false "Unable to download the script! Exiting."
-            exitScript
-            }
-    if($global:recovery -eq $false)        
-        {
-            logWrite 10 $True "The script has been downloaded."
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
-}
-
-# -------------------------------------------------------
-# Download Insider Risk PowerSell Script (Step 11)
-# -------------------------------------------------------
-function downloadscriptInsiderRisks
-{
-    try
-        {
+            #InsiderRisk scripts
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile $($LogPath)wks-new-HRConnector.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile "$($LogPath)wks-new-HRConnector.ps1" -ErrorAction Stop
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile $($LogPath)upload_termination_records.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile "$($LogPath)upload_termination_records.ps1" -ErrorAction Stop
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/Update-Hub.ps1 -OutFile "$($LogPath)Update-Hub.ps1" -ErrorAction Stop
-        }
+        } 
         catch 
             {
                 write-Debug $error[0].Exception
-                logWrite 11 $false "Unable to download the script! Exiting."
+                logWrite 8 $false "Unable to download the workshop scripts from GitHub! Exiting."
                 exitScript
             }
     if($global:recovery -eq $false)
         {
-            logWrite 11 $True "The scripts has been downloaded."
+            logWrite 8 $True "Successfully downloaded the workshop scripts."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
-}
+}       
 
 # -------------------------------------------------------
 # Exit function
@@ -571,41 +509,21 @@ if($nextPhase -eq 7)
 if($nextPhase -eq 8)
     {
         write-debug "Phase $nextPhase"
-        downloadscriptlabel
+        downloadscripts
     }
 
-if($nextPhase -eq 9)
-    {
-        write-debug "Phase $nextPhase"
-        downloadscriptDLP
-    }
-
-if($nextPhase -eq 10)
-    {
-        write-debug "Phase $nextPhase"
-        downloadscriptRetention
-    }
-
-if($nextPhase -eq 11)
-    {
-        write-debug "Phase $nextPhase"
-        downloadscriptInsiderRisks
-    }
-
-if ($nextPhase -ge 12)
+if ($nextPhase -ge 9)
     {
         write-debug "Phase $nextPhase"
         $nextScript = $LogPath + "wks-new-label.ps1"
-        logWrite 12 $true "Launching $nextScript"
+        logWrite 9 $true "Launching $nextScript"
         if ($debug)
             {
                 Stop-Transcript
-                $nextScript -$debug
+                .\$nextScript -$debug
             } 
             else 
                 {
-                $nextScript
+                .\$nextScript
                 }
     }
-
-
