@@ -120,6 +120,7 @@ function ConnectAzureAD
                             write-Debug $error[0].Exception
                             Write-Host "Installing Azure AD PowerShell Module..."
                             Install-Module AzureAD -Force -AllowClobber
+                            Connect-AzureAD
                             try 
                                 {
                                     Write-Debug "Get-Command Get-AzureAD -ErrorAction stop"
