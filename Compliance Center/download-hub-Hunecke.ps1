@@ -278,8 +278,8 @@ function ConnectTeams
 {
     try 
     {
-        Write-Debug "Get-LicenseReportForChangeNotificationSubscription -ErrorAction stop"
-        $testConnection = Get-LicenseReportForChangeNotificationSubscription -ErrorAction stop | Out-Null #if true (Already Connected)
+        Write-Debug "Get-CsTenant -ErrorAction stop"
+        $testConnection = Get-CsTenant -ErrorAction stop | Out-Null #if true (Already Connected)
     }
     catch
         {
