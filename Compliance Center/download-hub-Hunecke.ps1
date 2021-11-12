@@ -131,7 +131,6 @@ function ConnectAzureAD
                        
                         }
             }
-
     if($global:recovery -eq $false)
         {
             logWrite 1 $true "Successfully connected to Azure AD."
@@ -146,46 +145,42 @@ function ConnectAzureAD
 function ConnectMsol
 {
     try 
+    {
+        Write-Debug "Get-MSOLCompanyInformation -ErrorAction stop"
+        $testConnection = Get-MSOLCompanyInformation -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
         {
-            Write-Debug "Get-Command Get-MSOLUser -ErrorAction stop"
-            $testConnection = Get-Command Get-MSOLUser -ErrorAction stop | Out-Null
-        }
-        catch
-            {
-                write-Debug $error[0].Exception
-                Write-Host "Connecting to Microsoft Online..."
-                Connect-MsolService
-                try 
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Microsoft Online..."
+                    Connect-MSOLService -ErrorAction stop | Out-Null
+                }
+                catch    
                     {
-                        Write-Debug "Get-Command Get-MSOLUser -ErrorAction stop"
-                        $testConnection = Get-Command Get-MSOLUser -ErrorAction stop | Out-Null
-                    } 
-                    catch 
-                        {
-                            write-Debug $error[0].Exception
-                            Write-Host "Installing Microsoft Online PowerShell Module..."
-                            Install-Module MSOnline -Force -AllowClobber
-                            Connect-MsolService
-                            try 
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Microsoft Online PowerShell Module..."
+                                Install-Module MSOnline -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-MSOLService -ErrorAction stop | Out-Null
+                            }
+                            catch
                                 {
-                                    Write-Debug "Get-Command Get-MSOLUser -ErrorAction stop"
-                                    $testConnection = Get-Command Get-MSOLUser -ErrorAction stop | Out-Null
+                                    write-Debug $error[0].Exception
+                                    logWrite 2 $false "Couldn't connect to Microsoft Online. Exiting."
+                                    exitScript
                                 }
-                                catch
-                                    {
-                                        write-Debug $error[0].Exception
-                                        logWrite 2 $false "Couldn't connect to Microsoft Online. Exiting."
-                                        exitScript
-                                    }
-                       
-                        }
-            }
-    if($global:recovery -eq $false)
-        {
-            logWrite 2 $true "Successfully connected to Microsoft Online"
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
+                   
+                    }
         }
+        if($global:recovery -eq $false)
+            {
+                logWrite 2 $true "Successfully connected to Microsoft Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
 
 # -----------------------------------------------------------
@@ -194,109 +189,131 @@ function ConnectMsol
 function ConnectEXO
 {
     try 
+    {
+        Write-Debug "Get-OrganizationConfig -ErrorAction stop"
+        $testConnection = Get-OrganizationConfig -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
         {
-            Write-Debug "Get-Command Set-Mailbox -ErrorAction stop"
-            $testConnection = Get-Command Set-Mailbox -ErrorAction stop | Out-Null
-        }
-        catch
-            {
-                write-Debug $error[0].Exception
-                Write-Host "Connecting to Exchange Online..."
-                Connect-ExchangeOnline -ShowBanner:$false
-                try 
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Exchange Online..."
+                    Connect-ExchangeOnline -ShowBanner:$false -ErrorAction stop | Out-Null
+                }
+                catch    
                     {
-                        Write-Debug "Get-Command Set-Mailbox -ErrorAction stop"
-                        $testConnection = Get-Command Set-Mailbox -ErrorAction stop | Out-Null
-                    } 
-                    catch 
-                        {
-                            write-Debug $error[0].Exception
-                            Write-Host "Installing Exchange Online PowerShell Module..."
-                            Install-Module ExchangeOnlineManagement -Force -AllowClobber
-                            Connect-ExchangeOnline -ShowBanner:$false
-                            try 
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Exchange Online PowerShell Module..."
+                                Install-Module ExchangeOnlineManagement -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-ExchangeOnline -ShowBanner:$false -ErrorAction stop | Out-Null
+                            }
+                            catch
                                 {
-                                    Write-Debug "Get-Command Set-Mailbox -ErrorAction stop"
-                                    $testConnection = Get-Command Set-Mailbox -ErrorAction stop | Out-Null
+                                    write-Debug $error[0].Exception
+                                    logWrite 3 $false "Couldn't connect to Exchange Online. Exiting."
+                                    exitScript
                                 }
-                                catch
-                                    {
-                                        write-Debug $error[0].Exception
-                                        logWrite 3 $false "Couldn't connect to Exchange Online. Exiting."
-                                        exitScript
-                                    }
-                       
-                        }
-            }
-    if($global:recovery -eq $false)
-        {
-            logWrite 3 $true "Successfully connected to Exchange Online"
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
+                   
+                    }
         }
+        if($global:recovery -eq $false)
+            {
+                logWrite 3 $true "Successfully connected to Exchange Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
+
 # -----------------------------------------------------------
 # Connect to Compliance Center (Step 4)
 # -----------------------------------------------------------
 function ConnectSCC
 {
     try 
+    {
+        Write-Debug "Get-Label -ErrorAction stop"
+        $testConnection = Get-Label -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
         {
-            Write-Debug "Get-Command Set-Label -ErrorAction stop"
-            $testConnection = Get-Command Set-Label -ErrorAction stop | Out-Null
-        }
-        catch
-            {
-                write-Debug $error[0].Exception
-                Write-Host "Connecting to Compliance Center..."
-                Connect-IPPSSession
-                try 
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Compliance Center..."
+                    Connect-IPPSSession -ErrorAction stop | Out-Null
+                }
+                catch    
                     {
-                        Write-Debug "Get-Command Set-Label -ErrorAction stop"
-                        $testConnection = Get-Command Set-Label -ErrorAction stop | Out-Null
-                    } 
-                    catch 
-                        {
-                            write-Debug $error[0].Exception
-                            Write-Host "Installing Compliance Center PowerShell Module..."
-                            #Install-Module ExchangeOnlineManagement -Force -AllowClobber
-                            Connect-IPPSSession
-                            try 
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Compliance Center PowerShell Module..."
+                                #Install-Module ExchangeOnlineManagement -Force -AllowClobber #Not required, but it was already installed on the previous step
+                                Connect-IPPSSession -ErrorAction stop | Out-Null
+                            }
+                            catch
                                 {
-                                    Write-Debug "Get-Command Set-Label -ErrorAction stop"
-                                    $testConnection = Get-Command Set-Label -ErrorAction stop | Out-Null
+                                    write-Debug $error[0].Exception
+                                    logWrite 4 $false "Couldn't connect to Compliance Center. Exiting."
+                                    exitScript
                                 }
-                                catch
-                                    {
-                                        write-Debug $error[0].Exception
-                                        logWrite 4 $false "Couldn't connect to Compliance Center. Exiting."
-                                        exitScript
-                                    }
-                       
-                        }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 4 $true "Successfully connected to Compliance Center"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
             }
-    if($global:recovery -eq $false)
-        {
-            logWrite 4 $true "Successfully connected to Compliance Center"
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
 }
 
 # -------------------------------------------------------
-# Connect to xxxxxxxxxx(Step 5)
+# Connect to Microsoft Teams (Step 5)
 # -------------------------------------------------------
-function XXXXXXXXX
+function ConnectTeams
 {
-    
-    if($global:recovery -eq $false)
+    try 
+    {
+        Write-Debug "Get-LicenseReportForChangeNotificationSubscription -ErrorAction stop"
+        $testConnection = Get-LicenseReportForChangeNotificationSubscription -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
         {
-            logWrite 5 $true "Successfully XXXXXXXXXX"
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Microsoft Teams..."
+                    Connect-MicrosoftTeams -ErrorAction stop | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Microsoft Teams PowerShell Module..."
+                                Install-Module MicrosoftTeams -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-MicrosoftTeams -ErrorAction stop | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 5 $false "Couldn't connect to Microsoft Teams. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
         }
+        if($global:recovery -eq $false)
+            {
+                logWrite 5 $true "Successfully connected to Microsoft Teams"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
-
 # -------------------------------------------------------
 # Connect to SharePoint Online (Step 6)
 # -------------------------------------------------------
@@ -304,46 +321,42 @@ function ConnectSPO([string]$tenantName)
 {
     $AdminURL = "https://$tenantName-admin.sharepoint.com"
     try 
+    {
+        Write-Debug "Get-SPOTenant -ErrorAction stop"
+        $testConnection = Get-SPOTenant -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
         {
-            Write-Debug "Get-Command Get-SPOSite -ErrorAction stop"
-            $testConnection = Get-Command Get-SPOSite -ErrorAction stop | Out-Null
-        }
-        catch
-            {
-                write-Debug $error[0].Exception
-                Write-Host "Connecting to SharePoint Online..."
-                Connect-SPOService -Url $AdminURL
-                try 
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to SharePoint Online..."
+                    Connect-SPOService -Url $AdminURL -ErrorAction stop | Out-Null
+                }
+                catch    
                     {
-                        Write-Debug "Get-Command Get-SPOSite -ErrorAction stop"
-                        $testConnection = Get-Command Get-SPOSite -ErrorAction stop | Out-Null
-                    } 
-                    catch 
-                        {
-                            write-Debug $error[0].Exception
-                            Write-Host "Installing Exchange Online PowerShell Module..."
-                            Install-Module Microsoft.Online.SharePoint.PowerShell -Force -AllowClobber
-                            Connect-SPOService -Url $AdminURL
-                            try 
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing SharePoint Online PowerShell Module..."
+                                Install-Module Microsoft.Online.SharePoint.PowerShell -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-SPOService -Url $AdminURL -ErrorAction stop | Out-Null
+                            }
+                            catch
                                 {
-                                    Write-Debug "Get-Command Get-SPOSite -ErrorAction stop"
-                                    $testConnection = Get-Command Get-SPOSite -ErrorAction stop | Out-Null
+                                    write-Debug $error[0].Exception
+                                    logWrite 6 $false "Couldn't connect to SharePoint Online. Exiting."
+                                    exitScript
                                 }
-                                catch
-                                    {
-                                        write-Debug $error[0].Exception
-                                        logWrite 6 $false "Couldn't connect to SharePoint Online. Exiting."
-                                        exitScript
-                                    }
-                       
-                        }
-            }
-    if($global:recovery -eq $false)
-        {
-            logWrite 6 $true "Successfully connected to SharePoint Online"
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
+                   
+                    }
         }
+        if($global:recovery -eq $false)
+            {
+                logWrite 6 $true "Successfully connected to SharePoint Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
 
 # -------------------------------------------------------
