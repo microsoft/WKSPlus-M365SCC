@@ -38,22 +38,6 @@ function logWrite([int]$phase, [bool]$result, [string]$logstring)
 }
 
 # -----------------------------------------------------------
-# Test the log path
-# -----------------------------------------------------------
-function initialization
-{
-    $pathExists = Test-Path($LogPath)
-
-    if (!$pathExists)
-        {
-            New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
-        }
-        Set-Location -Path $LogPath
-        Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
-        logWrite 0 $true "Initialization completed"
-}
-
-# -----------------------------------------------------------
 # Start the recovery steps
 # -----------------------------------------------------------
 function recovery
@@ -94,11 +78,32 @@ function recovery
                 }
 }
 
+
+# -----------------------------------------------------------
+# Test the log path (Step 0)
+# -----------------------------------------------------------
+function initialization
+{
+    write-host $nextPhase -ForegroundColor red
+    
+    $pathExists = Test-Path($LogPath)
+    if (!$pathExists)
+        {
+            New-Item -ItemType "directory" -Path $LogPath -ErrorAction SilentlyContinue | Out-Null
+        }
+        Set-Location -Path $LogPath
+        Add-Content -Path $LogCSV -Value '"Phase","Result","DateTime","Status"'
+        logWrite 0 $true "Initialization completed"
+
+        write-host $nextPhase -ForegroundColor red
+}
+
 # -----------------------------------------------------------
 # Connect to AzureAD (Step 1)
 # -----------------------------------------------------------
 function ConnectAzureAD
 {
+    write-host $nextPhase -ForegroundColor red
     try 
         {
             Write-Debug "Get-AzureADDirectoryRole -ErrorAction stop"
