@@ -41,12 +41,49 @@ Param (
 )
 
 # -----------------------------------------------------------
-# Variable definition
+# Variable definition - General
 # -----------------------------------------------------------
 $LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
 $LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Download_Log.csv"
 $global:nextPhase = 1
 $global:recovery = $false
+
+# -----------------------------------------------------------
+# Variable definition - Sensitivity Labels (Steps 11-12)
+# -----------------------------------------------------------
+#label
+$labelDisplayName = "WKS Highly Confidential"
+$labelName = "WKS-Highly-Confidential"
+$labelTooltip = "Contains Highly confidential info"
+$labelComment = "Documents with this label contain sensitive data."
+#label policy
+$labelPolicyName = "WKS-Highly-confidential-publish"
+
+# -----------------------------------------------------------
+# Variable definition - Retention Policies (Steps 21-28)
+# -----------------------------------------------------------
+#Site Variables
+$siteName = "wks-compliance-center"
+$siteStorageQuota = 1024
+$siteResourceQuota = 1024
+$siteTemplate = "STS#3"
+# Tag Variables
+$retentionTagName = "WKS-Compliance-Tag"
+$retentionTagComment = "Keep and delete tag - 3 Days"
+$retentionTagAction = "KeepAndDelete"
+$retentionTagDuration = 3
+$retentionTagType = "ModificationAgeInDays"
+$isRecordLabel = $false
+# Policy Variables
+$retentionPolicyName = "WKS-Compliance-policy"
+
+# -----------------------------------------------------------
+# Variable definition - DLP (Steps 31-21)
+# -----------------------------------------------------------
+
+# -----------------------------------------------------------
+# Variable definition - InsiderRisk (Steps 41-24)
+# -----------------------------------------------------------
 
 # -----------------------------------------------------------
 # Debug mode
@@ -409,7 +446,52 @@ function ConnectSPO([string]$tenantName)
 }
 
 # -------------------------------------------------------
-# Get EXO Accepted Domains (Step 7)
+# Connect to PNP Online (Step 7)
+# -------------------------------------------------------
+function ConnectPNP([string]$tenantName)
+{
+    $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
+    try 
+    {
+        Write-Debug "Get-PNPTenant -ErrorAction stop"
+        $testConnection = Get-PNPTenant -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
+        {
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to PNP Online..."
+                    Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing PNP Online PowerShell Module..."
+                                Install-Module PnpOnline -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 7 $false "Couldn't connect to PNP Online. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 7 $true "Successfully connected to PNP Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
+}
+
+# -------------------------------------------------------
+# Get EXO Accepted Domains (Step 8)
 # -------------------------------------------------------
 Function getdomain
 {
@@ -421,13 +503,13 @@ Function getdomain
         catch
             {
                 write-Debug $error[0].Exception
-                logWrite 7 $false "Unable to fetch all accepted Domains."
+                logWrite 8 $false "Unable to fetch all accepted Domains."
                 exitScript
             }
     Write-Debug "Initial domain: $InitialDomain"
     if($global:recovery -eq $false)
         {
-            logWrite 7 $True "Successfully got the accepted domains."
+            logWrite 8 $True "Successfully got the accepted domains."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
@@ -435,7 +517,7 @@ Function getdomain
 }
 
 # -------------------------------------------------------
-# Download Workshop Script (Step 8)
+# Download Workshop Script (Step 9)
 # -------------------------------------------------------
 function downloadscripts
 {
@@ -461,28 +543,32 @@ function downloadscripts
         catch 
             {
                 write-Debug $error[0].Exception
-                logWrite 8 $false "Unable to download the workshop scripts from GitHub! Exiting."
+                logWrite 9 $false "Unable to download the workshop scripts from GitHub! Exiting."
                 exitScript
             }
     if($global:recovery -eq $false)
         {
-            logWrite 8 $True "Successfully downloaded the workshop scripts."
-            $global:nextPhase++ #9
+            logWrite 9 $True "Successfully downloaded the workshop scripts."
             $global:nextPhase++ #10
             $global:nextPhase++ #11
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }       
 
+#######################################################################################
+#########                S E N S I T I V I T Y      L A B E L                ##########
+#######################################################################################
+
 # -------------------------------------------------------
 # Create Sensitivity label (Step 11)
 # -------------------------------------------------------
-function SensitivityLabel
+function SensitivityLabel_Label
 {
     <#
     TO DO:
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
+
     $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
     $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
     try 
@@ -508,7 +594,7 @@ function SensitivityLabel
 # -------------------------------------------------------
 # Create Sensitivity policy (Step 12)
 # -------------------------------------------------------
-function SensitivityPolicy
+function SensitivityLabel_Policy
 {
     <#
     TO DO:
@@ -542,6 +628,173 @@ function SensitivityPolicy
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }
+
+#######################################################################################
+#########                  R E T E N T I O N     P O L I C Y                 ##########
+#######################################################################################
+
+# -------------------------------------------------------
+# Retention policy - Get the Site Owner (Step 21)
+# -------------------------------------------------------
+function RetentionPolicy_GetSiteOwner
+{
+    # should be connected to MSOL Service to set site owner
+    $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | ?{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
+    #then verify
+    if($null -eq $siteOwner){
+        logWrite 21 $false "Failed to get or set siteOwner variable."
+        exitScript
+    } else {
+        if($global:recovery -eq $false){
+            logWrite 21 $true "siteOwner set as $siteOwner"
+            $global:nextPhase++
+        }
+        return $siteOwner
+    }
+}
+
+# -------------------------------------------------------
+# Retention policy - Create Sharepoint Online Site (Step 22)
+# -------------------------------------------------------
+function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
+{
+    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+    Try{
+        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
+        } catch {
+            logWrite 22 $false "Unable to create the SharePoint site $siteName."
+            exitScript
+        }
+        logWrite 22 $True "$siteName site created successfully."
+        $global:nextPhase++
+}
+
+# -------------------------------------------------------
+# Retention Policy - Create Compliance Tag (Step 23)
+# -------------------------------------------------------
+Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
+{
+    try {
+        $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
+        } catch {
+        write-Debug $Error[0].Exception
+        logWrite 23 $false "Unable to create Retention Tag $retentionTagName"
+        exitScript
+    }
+    logWrite 23 $True "Retention Tag $retentionTagName created successfully."
+    $global:nextPhase++
+}
+
+# -------------------------------------------------------
+# Retention Policy - Create Retention Policy (Step 24)
+# -------------------------------------------------------
+function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$siteName, [string]$retentionTagName)
+{
+    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+
+    #try to create policy first
+    Try
+    {
+        #Create compliance retention Policy
+        $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
+    } catch {
+        #failed to create policy
+        write-Debug $Error[0].Exception
+        logWrite 24 $false "Unable to create the Retention Policy $retentionPolicyName"
+        exitScript
+    }
+    
+    #then, if successfull, create rule in policy
+    try {
+        $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName -ErrorAction Stop | Out-Null
+    }
+    catch {
+         #failed to create policy
+         write-Debug $Error[0].Exception
+         logWrite 24 $false "Unable to create the Retention Policy Rule."
+         exitScript
+    }
+    
+    #if successful, move on
+    logWrite 24 $True "Retention Policy $retentionPolicyName and Rule created successfully."
+    
+    #sleep for 240 seconds
+    goToSleep 240
+    $global:nextPhase++ #25
+    $global:nextPhase++ #26
+    $global:nextPhase++ #27
+    $global:nextPhase++ #28
+    $global:nextPhase++ #29
+    $global:nextPhase++ #30
+    $global:nextPhase++ #31
+}
+
+#######################################################################################
+#########                         D     L     P                              ##########
+#######################################################################################
+
+# -------------------------------------------------------
+# DLP - Create DLP Policy (Step 31)
+# -------------------------------------------------------
+function DLP_CreateDLPCompliancePolicy
+{
+
+    try{
+        if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
+            {write-host " The DLP Compliance Policy already Exists "}
+
+        else{
+            $params = @{
+                "Name" = "WKS Compliance Policy";
+                "ExchangeLocation" ="All";
+                "OneDriveLocation" = "All";
+                "SharePointLocation" = "All";
+                "EndpointDlpLocation" = "all";
+                "Teamslocation" = "All";
+                "Mode" = "Enable"
+                }
+                new-dlpcompliancepolicy @params
+            }
+    }
+
+    catch {
+        logWrite 31 $false "unable to create DLP Policy."
+        exit
+    }
+    logWrite 31 $True "Able to Create DLP Policy."
+    $global:nextPhase++
+}
+
+
+# -------------------------------------------------------
+# DLP - Create DLP Rule (Step 32)
+# -------------------------------------------------------
+function DLP_CreateDLPComplianceRule
+{
+    try{
+       $senstiveinfo = @(@{Name =”Credit Card Number”; minCount = “1”},@{Name =”International Banking Account Number (IBAN)”; minCount = “1”},@{Name =”U.S. Bank Account Number”; minCount = “1”})
+
+        $Rulevalue = @{
+            "Name" = "WKS-Copmpliance-Ruleset";
+            "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver’s license and passport number.";
+            "Policy" = "WKS Compliance Policy";
+            "ContentContainsSensitiveInformation"=$senstiveinfo;
+            "AccessScope"= "NotInOrganization";
+            "Disabled" =$false;
+            'ReportSeverityLevel'='High'
+            }
+            New-DlpComplianceRule @rulevalue 
+    }
+
+    catch {
+        logWrite 32 $false "unable to create DLP Rule."
+        exit
+    }
+    logWrite 32 $True "Able to Create DLP Rule."
+    $global:nextPhase++
+}
+
+
 
 # -------------------------------------------------------
 # Exit function
@@ -623,11 +876,17 @@ if($nextPhase -eq 6)
 if($nextPhase -eq 7)
     {
         write-debug "Phase $nextPhase"
+        ConnectPNP $tenantName
+    }
+
+if($nextPhase -eq 8)
+    {
+        write-debug "Phase $nextPhase"
         $tenantName = getdomain
         write-debug "$tenantName Returned"
     }
 
-if($nextPhase -eq 8)
+if($nextPhase -eq 9)
     {
         write-debug "Phase $nextPhase"
         downloadscripts
@@ -636,13 +895,49 @@ if($nextPhase -eq 8)
 if($nextPhase -eq 11)
     {
         write-debug "Phase $nextPhase"
-        SensitivityLabel
+        SensitivityLabel_Label
     }
 
 if($nextPhase -eq 12)
     {
         write-debug "Phase $nextPhase"
-        SensitivityPolicy
+        SensitivityLabel_Policy
+    }
+
+if($nextPhase -eq 21)
+    {
+        write-debug "Phase $nextPhase"
+        RetentionPolicy_GetSiteOwner
+    }
+
+if($nextPhase -eq 22)
+    {
+        write-debug "Phase $nextPhase"
+        RetentionPolicy_CreateSPOSite $tenantName $siteName $siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
+    }
+
+if($nextPhase -eq 23)
+    {
+        write-debug "Phase $nextPhase"
+        RetentionPolicy_CreateComplianceTag $retentionTagName $retentionTagComment $isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
+    }
+
+if($nextPhase -eq 24)
+    {
+        write-debug "Phase $nextPhase"
+        RetentionPolicy_NewRetentionPolicy $retentionPolicyName $tenantName $siteName $retentionTagName
+    }
+
+if($nextPhase -eq 31)
+    {
+        write-debug "Phase $nextPhase"
+        DLP_CreateDLPCompliancePolicy
+    }
+
+if($nextPhase -eq 32)
+    {
+        write-debug "Phase $nextPhase"
+        DLP_CreateDLPComplianceRule
     }
 
 
