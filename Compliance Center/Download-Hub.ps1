@@ -1,3 +1,41 @@
+<#
+ .Synopsis
+  Displays a visual representation of a calendar.
+
+ .Description
+  Displays a visual representation of a calendar. This function supports multiple months
+  and lets you highlight specific date ranges or days.
+
+ .Parameter Start
+  The first month to display.
+
+ .Parameter End
+  The last month to display.
+
+ .Parameter FirstDayOfWeek
+  The day of the month on which the week begins.
+
+ .Parameter HighlightDay
+  Specific days (numbered) to highlight. Used for date ranges like (25..31).
+  Date ranges are specified by the Windows PowerShell range syntax. These dates are
+  enclosed in square brackets.
+
+ .Parameter HighlightDate
+  Specific days (named) to highlight. These dates are surrounded by asterisks.
+
+ .Example
+   # Show a default display of this month.
+   Show-Calendar
+
+ .Example
+   # Display a date range.
+   Show-Calendar -Start "March, 2010" -End "May, 2010"
+
+ .Example
+   # Highlight a range of days.
+   Show-Calendar -HighlightDay (1..10 + 22) -HighlightDate "December 25, 2008"
+#>
+
 Param (
     [switch]$debug
 )
@@ -11,7 +49,7 @@ $global:nextPhase = 1
 $global:recovery = $false
 
 # -----------------------------------------------------------
-# DEBUG
+# Debug mode
 # -----------------------------------------------------------
 $oldDebugPreference = $DebugPreference
 if($debug)
@@ -22,7 +60,7 @@ if($debug)
 }
 
 # -----------------------------------------------------------
-# Write log function
+# Write the log
 # -----------------------------------------------------------
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
@@ -35,6 +73,18 @@ function logWrite([int]$phase, [bool]$result, [string]$logstring)
         {
             Write-Host -ForegroundColor Red "$(Get-Date) - Phase $phase : $logstring"
         }
+}
+
+# -----------------------------------------------------------
+# Sleep x seconds
+# -----------------------------------------------------------
+function goToSleep ([int]$seconds){
+    for ($i = 1; $i -le $seconds; $i++ )
+    {
+        $p = ([Math]::Round($i/$seconds, 2) * 100)
+        Write-Progress -Activity "Allowing time for the creation on backend..." -Status "$p% Complete:" -PercentComplete $p
+        Start-Sleep -Seconds 1
+    }
 }
 
 # -----------------------------------------------------------
@@ -417,10 +467,81 @@ function downloadscripts
     if($global:recovery -eq $false)
         {
             logWrite 8 $True "Successfully downloaded the workshop scripts."
-            $global:nextPhase++
+            $global:nextPhase++ #9
+            $global:nextPhase++ #10
+            $global:nextPhase++ #11
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }       
+
+# -------------------------------------------------------
+# Create Sensitivity label (Step 11)
+# -------------------------------------------------------
+function SensitivityLabel
+{
+    <#
+    TO DO:
+    Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
+    #>
+    $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
+    $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
+    try 
+        {
+            $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
+        } 
+        catch 
+            {
+                write-Debug $error[0].Exception
+                logWrite 11 $false "Error creating Sensitivity label"
+                exitScript
+            }
+    if($global:recovery -eq $false)
+        {
+            logWrite 11 $True "Successfully created Sensitivity label."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
+
+    goToSleep 30
+}
+
+# -------------------------------------------------------
+# Create Sensitivity policy (Step 12)
+# -------------------------------------------------------
+function SensitivityPolicy
+{
+    <#
+    TO DO:
+    - Need to check to see if label policy exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
+    - Need to make sure the labele exists
+    #>
+
+    try 
+        {
+            New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
+        } 
+        catch 
+            {
+                write-Debug $error[0].Exception
+                logWrite 12 $false "Error creating Sensitivity label policy"
+                exitScript
+            }
+    
+    if($global:recovery -eq $false)
+        {
+            logWrite 12 $True "Successfully created Sensitivity label policy."
+            $global:nextPhase++ #13
+            $global:nextPhase++ #14
+            $global:nextPhase++ #15
+            $global:nextPhase++ #16
+            $global:nextPhase++ #17
+            $global:nextPhase++ #18
+            $global:nextPhase++ #19
+            $global:nextPhase++ #20
+            $global:nextPhase++ #21
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
+}
 
 # -------------------------------------------------------
 # Exit function
@@ -512,19 +633,32 @@ if($nextPhase -eq 8)
         downloadscripts
     }
 
-if ($nextPhase -ge 9)
+if($nextPhase -eq 11)
     {
         write-debug "Phase $nextPhase"
-        Set-Location -Path $LogPath
-        $nextScript = "wks-new-label.ps1"
-        logWrite 9 $true "Launching $nextScript script"
-        if ($debug)
-            {
-                Stop-Transcript
-                .\wks-new-label.ps1 -$debug
-            } 
-            else 
-                {
-                    .\wks-new-label.ps1
-                }
+        SensitivityLabel
     }
+
+if($nextPhase -eq 12)
+    {
+        write-debug "Phase $nextPhase"
+        SensitivityPolicy
+    }
+
+
+#if ($nextPhase -ge 9)
+#    {
+#        write-debug "Phase $nextPhase"
+#        Set-Location -Path $LogPath
+#        $nextScript = "wks-new-label.ps1"
+#        logWrite 9 $true "Launching $nextScript script"
+#        if ($debug)
+#            {
+#                Stop-Transcript
+#                .\wks-new-label.ps1 -$debug
+#            } 
+#            else 
+#                {
+#                    .\wks-new-label.ps1
+#                }
+#    }
