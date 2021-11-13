@@ -795,6 +795,33 @@ function DLP_CreateDLPComplianceRule
 }
 
 
+#######################################################################################
+#########                    I N S I D E R     R I S K S                     ##########
+#######################################################################################
+
+# -------------------------------------------------------
+# InsiderRisks - Create an Azure App (Step 41)
+# -------------------------------------------------------
+function InsiderRisks_CreateAzureApp
+{
+
+}
+
+# -------------------------------------------------------
+# InsiderRisks - Create the CSV file (Step 42)
+# -------------------------------------------------------
+function InsiderRisks_CreateCSVFile
+{
+
+}
+
+# -------------------------------------------------------
+# InsiderRisks - Upload CSV file (Step 43)
+# -------------------------------------------------------
+function InsiderRisks_UploadCSV
+{
+
+}
 
 # -------------------------------------------------------
 # Exit function
@@ -938,6 +965,24 @@ if($nextPhase -eq 32)
     {
         write-debug "Phase $nextPhase"
         DLP_CreateDLPComplianceRule
+    }
+
+if($nextPhase -eq 41)
+    {
+        write-debug "Phase $nextPhase"
+        InsiderRisks_CreateAzureApp
+    }
+
+if($nextPhase -eq 42)
+    {
+        write-debug "Phase $nextPhase"
+        InsiderRisks_CreateCSVFile
+    }
+
+if($nextPhase -eq 43)
+    {
+        write-debug "Phase $nextPhase"
+        InsiderRisks_UploadCSV
     }
 
 
