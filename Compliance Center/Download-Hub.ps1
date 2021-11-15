@@ -62,7 +62,8 @@ Param (
     [switch]$SkipInsiderRisks
 )
 
-Write-Host $SkipRetentionPolicy -ForegroundColor Red
+Write-Host $debug -ForegroundColor Red
+Write-Host $SkipSensitivityLabels -ForegroundColor Red
 Write-Host $SkipRetentionPolicies -ForegroundColor Red
 write-host $SkipDLP -ForegroundColor Red
 
@@ -774,11 +775,11 @@ Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]
                         exitScript
                     }
 
-            if($global:recovery -eq $false)
-                    {
-                        logWrite 23 $True "Retention Tag $retentionTagName created successfully."
-                        $global:nextPhase++
-                        Write-Debug "nextPhase set to $global:nextPhase" 
+        if($global:recovery -eq $false)
+                {
+                    logWrite 23 $True "Retention Tag $retentionTagName created successfully."
+                    $global:nextPhase++
+                    Write-Debug "nextPhase set to $global:nextPhase" 
                     }
         }
         else 
@@ -794,43 +795,63 @@ Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]
 # -------------------------------------------------------
 function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
-    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
-
-    #try to create policy first
-    Try
-    {
-        #Create compliance retention Policy
-        $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
-    } catch {
-        #failed to create policy
-        write-Debug $Error[0].Exception
-        logWrite 24 $false "Unable to create the Retention Policy $retentionPolicyName"
-        exitScript
-    }
-    
-    #then, if successfull, create rule in policy
-    try {
-        $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName -ErrorAction Stop | Out-Null
-    }
-    catch {
-         #failed to create policy
-         write-Debug $Error[0].Exception
-         logWrite 24 $false "Unable to create the Retention Policy Rule."
-         exitScript
-    }
-    
-    #if successful, move on
-    logWrite 24 $True "Retention Policy $retentionPolicyName and Rule created successfully."
-    
-    #sleep for 240 seconds
-    goToSleep 240
-    $global:nextPhase++ #25
-    $global:nextPhase++ #26
-    $global:nextPhase++ #27
-    $global:nextPhase++ #28
-    $global:nextPhase++ #29
-    $global:nextPhase++ #30
-    $global:nextPhase++ #31
+    if ($SkipRetentionPolicy -ne "True")
+        {
+            $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+            #try to create policy first
+            Try
+                {
+                    #Create compliance retention Policy
+                    $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
+                } 
+                catch 
+                    {
+                        #failed to create policy
+                        write-Debug $Error[0].Exception
+                        logWrite 24 $false "Unable to create the Retention Policy $retentionPolicyName"
+                        exitScript
+                    }
+            
+            #then, if successfull, create rule in policy
+            try 
+                {
+                    $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName -ErrorAction Stop | Out-Null
+                    #sleep for 240 seconds
+                    #goToSleep 240
+                }
+            catch 
+                {
+                    #failed to create policy
+                    write-Debug $Error[0].Exception
+                    logWrite 24 $false "Unable to create the Retention Policy Rule."
+                    exitScript
+                }
+            
+            if($global:recovery -eq $false)
+                {
+                    logWrite 24 $True "Retention Policy $retentionPolicyName and Rule created successfully."
+                    $global:nextPhase++ #25
+                    $global:nextPhase++ #26
+                    $global:nextPhase++ #27
+                    $global:nextPhase++ #28
+                    $global:nextPhase++ #29
+                    $global:nextPhase++ #30
+                    $global:nextPhase++ #31
+                    Write-Debug "nextPhase set to $global:nextPhase" 
+                }
+        }
+        else 
+            {
+                logWrite 24 $True "Skipped Retention Policy."
+                $global:nextPhase++ #25
+                $global:nextPhase++ #26
+                $global:nextPhase++ #27
+                $global:nextPhase++ #28
+                $global:nextPhase++ #29
+                $global:nextPhase++ #30
+                $global:nextPhase++ #31
+                Write-Debug "nextPhase set to $global:nextPhase"    
+            }
 }
 
 #######################################################################################
