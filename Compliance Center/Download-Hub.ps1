@@ -594,7 +594,7 @@ function SensitivityLabel_Label
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
 
-    if ($SkipSensitivityLabels -eq $false)
+    if ($SkipSensitivityLabels -ne "True")
         {
             $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
@@ -636,7 +636,7 @@ function SensitivityLabel_Policy
     - Need to make sure the labele exists
     #>
 
-    if ($SkipSensitivityLabels -eq $false)
+    if ($SkipSensitivityLabels -ne "True")
         {
             try 
                 {
@@ -689,8 +689,10 @@ function SensitivityLabel_Policy
 # -------------------------------------------------------
 function RetentionPolicy_GetSiteOwner
 {
+    write-host
     Write-Host $SkipRetentionPolicy -ForegroundColor Red
-    if ($SkipRetentionPolicy -eq $false)
+    write-host
+    if ($SkipRetentionPolicy -ne "True")
         {
             try 
                 {
@@ -725,7 +727,7 @@ function RetentionPolicy_GetSiteOwner
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
     
-    if ($SkipRetentionPolicy -eq $false)
+    if ($SkipRetentionPolicy -ne "True")
         {
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
             try
@@ -752,7 +754,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
                 Write-Debug "nextPhase set to $global:nextPhase" 
             }
 
-    }
+}
 
 # -------------------------------------------------------
 # Retention Policy - Create Compliance Tag (Step 23)
