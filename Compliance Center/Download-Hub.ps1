@@ -599,7 +599,7 @@ function SensitivityLabel_Label
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
 
-    if ($SkipSensitivityLabels -ne "True")
+    if ($SkipSensitivityLabels -eq $false)
         {
             $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
@@ -641,7 +641,7 @@ function SensitivityLabel_Policy
     - Need to make sure the labele exists
     #>
 
-    if ($SkipSensitivityLabels -ne "True")
+    if ($SkipSensitivityLabels -eq $false)
         {
             try 
                 {
@@ -694,7 +694,7 @@ function SensitivityLabel_Policy
 # -------------------------------------------------------
 function RetentionPolicy_GetSiteOwner
 {
-    if ($SkipRetentionPolicy -ne "True")
+    if ($SkipRetentionPolicy -eq $false)
         {
             try 
                 {
@@ -729,7 +729,7 @@ function RetentionPolicy_GetSiteOwner
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
     
-    if ($SkipRetentionPolicy -ne "True")
+    if ($SkipRetentionPolicy -eq $false)
         {
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
             try
@@ -763,7 +763,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
 # -------------------------------------------------------
 Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
-    if ($SkipRetentionPolicy -ne "True")
+    if ($SkipRetentionPolicy -eq $false)
         {
             try {
                     $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
@@ -795,7 +795,7 @@ Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]
 # -------------------------------------------------------
 function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
-    if ($SkipRetentionPolicy -ne "True")
+    if ($SkipRetentionPolicy -eq $false)
         {
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
             #try to create policy first
