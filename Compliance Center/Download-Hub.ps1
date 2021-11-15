@@ -689,7 +689,7 @@ function SensitivityLabel_Policy
 # -------------------------------------------------------
 function RetentionPolicy_GetSiteOwner
 {
-    
+    Write-Host $SkipRetentionPolicy -ForegroundColor Red
     if ($SkipRetentionPolicy -eq $false)
         {
             try 
@@ -728,29 +728,26 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
     if ($SkipRetentionPolicy -eq $false)
         {
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
-            Try
+            try
                 {
                     $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
                 catch 
                     {
+                        write-Debug $error[0].Exception
                         logWrite 22 $false "Unable to create the SharePoint site $siteName."
                         exitScript
                     }
+            if($global:recovery -eq $false)
+                {
                     logWrite 22 $True "$siteName site created successfully."
                     $global:nextPhase++
-
-                if($global:recovery -eq $false)
-                    {
-                        logWrite 21 $True "Successfully got the Site Owner ."
-                        $global:nextPhase++
-                        Write-Debug "nextPhase set to $global:nextPhase"
-                    }
-
+                    Write-Debug "nextPhase set to $global:nextPhase"
                 }
+        }
         else 
             {
-                logWrite 21 $True "Skipped Retention Policy."
+                logWrite 22 $True "Skipped Retention Policy."
                 $global:nextPhase++
                 Write-Debug "nextPhase set to $global:nextPhase" 
             }
