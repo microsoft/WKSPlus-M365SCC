@@ -1,10 +1,23 @@
 <#
  .Synopsis
-  Displays a visual representation of a calendar.
+  Pré-configuration for WorkshopPLUS: Securiy and Compliance: Compliance Center
 
  .Description
   Displays a visual representation of a calendar. This function supports multiple months
   and lets you highlight specific date ranges or days.
+
+    ##################################################################################################
+    # This sample script is not supported under any Microsoft standard support program or service.   #
+    # This sample script is provided AS IS without warranty of any kind.                             #
+    # Microsoft further disclaims all implied warranties including, without limitation, any implied  #
+    # warranties of merchantability or of fitness for a particular purpose. The entire risk arising  #
+    # out of the use or performance of the sample script and documentation remains with you. In no   #
+    # event shall Microsoft, its authors, or anyone else involved in the creation, production, or    #
+    # delivery of the scripts be liable for any damages whatsoever (including, without limitation,   #
+    # damages for loss of business profits, business interruption, loss of business information,     #
+    # or other pecuniary loss) arising out of the use of or inability to use the sample script or    #
+    # documentation, even if Microsoft has been advised of the possibility of such damages.          #
+    ##################################################################################################
 
  .Parameter Start
   The first month to display.
@@ -35,6 +48,10 @@
    # Highlight a range of days.
    Show-Calendar -HighlightDay (1..10 + 22) -HighlightDate "December 25, 2008"
 #>
+
+#
+#New-ModuleManifest -Path .\Scripts\TestModule.psd1 -Author 'Marcelo Hunecke' -CompanyName 'Microsoft' -RootModule 'WorkshopSnC.psm1' -FunctionsToExport @('Get-RegistryKey','Set-RegistryKey') -Description 'This is a Workshop Security and Compliance module.'
+#
 
 Param (
     [switch]$debug
@@ -916,12 +933,12 @@ function InsiderRisks_CreateCSVFile
         catch 
         {
             write-Debug $error[0].Exception
-            logWrite 41 $false "Error creating Azure App for HR Connector"
+            logWrite 42 $false "Error creating Azure App for HR Connector"
             exitScript
         }
     if($global:recovery -eq $false)
         {
-            logWrite 41 $True "Successfully created Azure App for HR Connector."
+            logWrite 42 $True "Successfully created Azure App for HR Connector."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
@@ -933,30 +950,42 @@ function InsiderRisks_CreateCSVFile
 function InsiderRisks_UploadCSV
 {
 
-    {
-        $ConnectorJobID = Read-Host "Paste the Connector job ID"
-        if ($null -eq $ConnectorJobID)
-            {
-                $ConnectorJobID = Read-Host "Paste the Connector job ID"
-            }
-        Write-Host
-        write-host "##################################################################" -ForegroundColor Green
-        write-host "##                                                              ##" -ForegroundColor Green
-        write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
-        write-host "##                                                              ##" -ForegroundColor Green
-        write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
-        write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
-        write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
-        write-host "##   JobId     : $ConnectorJobID           ##" -ForegroundColor Green
-        write-host "##   CSV File  : $global:HRConnectorCSVFile           " -ForegroundColor Green
-        write-host "##                                                              ##" -ForegroundColor Green
-        write-host "##################################################################" -ForegroundColor Green
-        Write-Host
+    try   
+        {
+            $ConnectorJobID = Read-Host "Paste the Connector job ID"
+            if ($null -eq $ConnectorJobID)
+                {
+                    $ConnectorJobID = Read-Host "Paste the Connector job ID"
+                }
+            Write-Host
+            write-host "##################################################################" -ForegroundColor Green
+            write-host "##                                                              ##" -ForegroundColor Green
+            write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
+            write-host "##                                                              ##" -ForegroundColor Green
+            write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
+            write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
+            write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
+            write-host "##   JobId     : $ConnectorJobID           ##" -ForegroundColor Green
+            write-host "##   CSV File  : $global:HRConnectorCSVFile           " -ForegroundColor Green
+            write-host "##                                                              ##" -ForegroundColor Green
+            write-host "##################################################################" -ForegroundColor Green
+            Write-Host
 
-        Set-Location -Path "$env:UserProfile\Desktop\SCLabFiles\Scripts"
-        .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
-    }
-
+            Set-Location -Path "$env:UserProfile\Desktop\SCLabFiles\Scripts"
+            .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
+        }
+        catch 
+        {
+            write-Debug $error[0].Exception
+            logWrite 43 $false "Error creating Azure App for HR Connector"
+            exitScript
+        }
+    if($global:recovery -eq $false)
+        {
+            logWrite 43 $True "Successfully created Azure App for HR Connector."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
 }
 
 # -------------------------------------------------------
