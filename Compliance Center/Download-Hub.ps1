@@ -498,8 +498,8 @@ function ConnectPNP([string]$tenantName)
     $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
     try 
     {
-        Write-Debug "Get-Get-PnPApp -ErrorAction stop"
-        $testConnection = Get-PnPApp -ErrorAction stop | Out-Null #if true (Already Connected)
+        Write-Debug "Get-ChangeLog -ErrorAction stop"
+        $testConnection = Get-ChangeLog -ErrorAction stop | Out-Null #if true (Already Connected)
     }
     catch
         {
