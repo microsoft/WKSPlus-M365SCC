@@ -417,8 +417,36 @@ function ConnectTeams
                 Write-Debug "nextPhase set to $global:nextPhase"
             }
 }
+
 # -------------------------------------------------------
-# Connect to SharePoint Online (Step 6)
+# Get Tenant Name (Step 6)
+# Funcion required for SharePoint and PNP connections
+# -------------------------------------------------------
+Function getdomain
+{
+    try
+        {
+            Write-Debug "$InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}"
+            $InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}
+        }
+        catch
+            {
+                write-Debug $error[0].Exception
+                logWrite 6 $false "Unable to fetch Tenant name."
+                exitScript
+            }
+    Write-Debug "Initial domain: $InitialDomain"
+    if($global:recovery -eq $false)
+        {
+            logWrite 6 $True "Successfully got Tenant Name."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
+    return $InitialDomain.name.split(".")[0]
+}
+
+# -------------------------------------------------------
+# Connect to SharePoint Online (Step 7)
 # -------------------------------------------------------
 function ConnectSPO([string]$tenantName)
 {
@@ -448,7 +476,7 @@ function ConnectSPO([string]$tenantName)
                             catch
                                 {
                                     write-Debug $error[0].Exception
-                                    logWrite 6 $false "Couldn't connect to SharePoint Online. Exiting."
+                                    logWrite 7 $false "Couldn't connect to SharePoint Online. Exiting."
                                     exitScript
                                 }
                    
@@ -456,14 +484,14 @@ function ConnectSPO([string]$tenantName)
         }
         if($global:recovery -eq $false)
             {
-                logWrite 6 $true "Successfully connected to SharePoint Online"
+                logWrite 7 $true "Successfully connected to SharePoint Online"
                 $global:nextPhase++
                 Write-Debug "nextPhase set to $global:nextPhase"
             }
 }
 
 # -------------------------------------------------------
-# Connect to PNP Online (Step 7)
+# Connect to PNP Online (Step 8)
 # -------------------------------------------------------
 function ConnectPNP([string]$tenantName)
 {
@@ -493,7 +521,7 @@ function ConnectPNP([string]$tenantName)
                             catch
                                 {
                                     write-Debug $error[0].Exception
-                                    logWrite 7 $false "Couldn't connect to PNP Online. Exiting."
+                                    logWrite 8 $false "Couldn't connect to PNP Online. Exiting."
                                     exitScript
                                 }
                    
@@ -501,37 +529,12 @@ function ConnectPNP([string]$tenantName)
         }
         if($global:recovery -eq $false)
             {
-                logWrite 7 $true "Successfully connected to PNP Online"
+                logWrite 8 $true "Successfully connected to PNP Online"
                 $global:nextPhase++
                 Write-Debug "nextPhase set to $global:nextPhase"
             }
 }
 
-# -------------------------------------------------------
-# Get EXO Accepted Domains (Step 8)
-# -------------------------------------------------------
-Function getdomain
-{
-    try
-        {
-            Write-Debug "$InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}"
-            $InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}
-        }
-        catch
-            {
-                write-Debug $error[0].Exception
-                logWrite 8 $false "Unable to fetch all accepted Domains."
-                exitScript
-            }
-    Write-Debug "Initial domain: $InitialDomain"
-    if($global:recovery -eq $false)
-        {
-            logWrite 8 $True "Successfully got the accepted domains."
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
-    return $InitialDomain.name.split(".")[0]
-}
 
 # -------------------------------------------------------
 # Download Workshop Script (Step 9)
@@ -1062,21 +1065,20 @@ if($nextPhase -eq 5)
 if($nextPhase -eq 6)
     {
         write-debug "Phase $nextPhase"
-        ConnectSPO $tenantName
+        $tenantName = getdomain
+        write-debug "$tenantName Returned"
     }
 
 if($nextPhase -eq 7)
     {
-        Write-Host $tenantName -ForegroundColor Red
         write-debug "Phase $nextPhase"
-        ConnectPNP $tenantName
+        ConnectSPO $tenantName
     }
 
 if($nextPhase -eq 8)
     {
         write-debug "Phase $nextPhase"
-        $tenantName = getdomain
-        write-debug "$tenantName Returned"
+        ConnectPNP $tenantName
     }
 
 if($nextPhase -eq 9)
