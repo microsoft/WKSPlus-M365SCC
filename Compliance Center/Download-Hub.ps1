@@ -601,10 +601,13 @@ function SensitivityLabel_Label
 
     if ($SkipSensitivityLabels -eq $false)
         {
+            write-Debug "(Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName"
             $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
+            write-Debug "$Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL""
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             try 
                 {
+                    write-Debug "$labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
                     $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
                 } 
                 catch 
@@ -694,7 +697,7 @@ function SensitivityLabel_Policy
 # -------------------------------------------------------
 function RetentionPolicy_GetSiteOwner
 {
-    if ($SkipRetentionPolicy -eq $false)
+    if ($SkipRetentionPolicies -eq $false)
         {
             try 
                 {
@@ -728,8 +731,7 @@ function RetentionPolicy_GetSiteOwner
 # -------------------------------------------------------
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
-    
-    if ($SkipRetentionPolicy -eq $false)
+    if ($SkipRetentionPolicies -eq $false)
         {
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
             try
@@ -763,7 +765,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
 # -------------------------------------------------------
 Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
-    if ($SkipRetentionPolicy -eq $false)
+    if ($SkipRetentionPolicies -eq $false)
         {
             try {
                     $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
@@ -795,7 +797,7 @@ Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]
 # -------------------------------------------------------
 function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$siteName, [string]$retentionTagName)
 {
-    if ($SkipRetentionPolicy -eq $false)
+    if ($SkipRetentionPolicies -eq $false)
         {
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
             #try to create policy first
@@ -863,7 +865,6 @@ function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [strin
 # -------------------------------------------------------
 function DLP_CreateDLPCompliancePolicy
 {
-
     try{
         if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
             {write-host " The DLP Compliance Policy already Exists "}
