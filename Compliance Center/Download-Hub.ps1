@@ -55,14 +55,12 @@
 
 Param (
     [CmdletBinding()]
-    #[switch]$debug,
+    [switch]$debug,
     [switch]$SkipSensitivityLabels,
     [switch]$SkipRetentionPolicies,
     [switch]$SkipDLP,
     [switch]$SkipInsiderRisks
 )
-
-write-host -ForegroundColor $SkipSensitivityLabels
 
 # -----------------------------------------------------------
 # Variable definition - General
@@ -691,19 +689,34 @@ function SensitivityLabel_Policy
 # -------------------------------------------------------
 function RetentionPolicy_GetSiteOwner
 {
-    # should be connected to MSOL Service to set site owner
-    $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | ?{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
-    #then verify
-    if($null -eq $siteOwner){
-        logWrite 21 $false "Failed to get or set siteOwner variable."
-        exitScript
-    } else {
-        if($global:recovery -eq $false){
-            logWrite 21 $true "siteOwner set as $siteOwner"
-            $global:nextPhase++
+    
+    if ($SkipRetentionPolicy -eq $false)
+        {
+            try 
+                {
+                    # should be connected to MSOL Service to set site owner
+                    $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
+                }
+                catch 
+                    {
+                        write-Debug $error[0].Exception
+                        logWrite 21 $false "Failed to get or set siteOwner variable."
+                        exitScript
+                    }
+            return $siteOwner
+            if($global:recovery -eq $false)
+                {
+                    logWrite 21 $True "Successfully got the Site Owner ."
+                    $global:nextPhase++
+                    Write-Debug "nextPhase set to $global:nextPhase"
+                }
         }
-        return $siteOwner
-    }
+        else 
+            {
+                logWrite 21 $True "Skipped Retention Policy."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase" 
+            }
 }
 
 # -------------------------------------------------------
@@ -711,16 +724,38 @@ function RetentionPolicy_GetSiteOwner
 # -------------------------------------------------------
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
-    $url = "https://$tenantName.sharepoint.com/sites/$siteName"
-    Try{
-        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
-        } catch {
-            logWrite 22 $false "Unable to create the SharePoint site $siteName."
-            exitScript
-        }
-        logWrite 22 $True "$siteName site created successfully."
-        $global:nextPhase++
-}
+    
+    if ($SkipRetentionPolicy -eq $false)
+        {
+            $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+            Try
+                {
+                    $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
+                } 
+                catch 
+                    {
+                        logWrite 22 $false "Unable to create the SharePoint site $siteName."
+                        exitScript
+                    }
+                    logWrite 22 $True "$siteName site created successfully."
+                    $global:nextPhase++
+
+                if($global:recovery -eq $false)
+                    {
+                        logWrite 21 $True "Successfully got the Site Owner ."
+                        $global:nextPhase++
+                        Write-Debug "nextPhase set to $global:nextPhase"
+                    }
+
+                }
+        else 
+            {
+                logWrite 21 $True "Skipped Retention Policy."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase" 
+            }
+
+    }
 
 # -------------------------------------------------------
 # Retention Policy - Create Compliance Tag (Step 23)
