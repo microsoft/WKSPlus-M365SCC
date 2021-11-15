@@ -804,7 +804,43 @@ function DLP_CreateDLPComplianceRule
 # -------------------------------------------------------
 function InsiderRisks_CreateAzureApp
 {
+    try
+        {
+            $AzureADAppReg = New-AzureADApplication -DisplayName HRConnector -AvailableToOtherTenants $false -ErrorAction Stop
+            $global:appname = $AzureADAppReg.DisplayName
+            $global:appid = $AzureADAppReg.AppID
+            $AzureTenantID = Get-AzureADTenantDetail
+            $global:tenantid = $AzureTenantID.ObjectId
+            $AzureSecret = New-AzureADApplicationPasswordCredential -CustomKeyIdentifier PrimarySecret -ObjectId $azureADAppReg.ObjectId -EndDate ((Get-Date).AddMonths(6)) -ErrorAction Stop
+            $global:Secret = $AzureSecret.value
 
+            write-host "##################################################################" -ForegroundColor Green
+            write-host "##                                                              ##" -ForegroundColor Green
+            write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
+            write-host "##                                                              ##" -ForegroundColor Green
+            write-host "##   App name  : $global:appname                                    ##" -ForegroundColor Green
+            write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
+            write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
+            write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
+            write-host "##                                                              ##" -ForegroundColor Green
+            write-host "##################################################################" -ForegroundColor Green
+            write-host
+            Write-host "Return to the lab instructions" -ForegroundColor Yellow
+            Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
+            write-host
+        }
+        catch 
+        {
+            write-Debug $error[0].Exception
+            logWrite 41 $false "Error creating Azure App for HR Connector"
+            exitScript
+        }
+    if($global:recovery -eq $false)
+        {
+            logWrite 41 $True "Successfully created Azure App for HR Connector."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
 }
 
 # -------------------------------------------------------
@@ -812,7 +848,83 @@ function InsiderRisks_CreateAzureApp
 # -------------------------------------------------------
 function InsiderRisks_CreateCSVFile
 {
+    $CurrentPath = Get-Location
+    write-host "##################################################################" -ForegroundColor Green
+    write-host "##                                                              ##" -ForegroundColor Green
+    write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
+    write-host "##                                                              ##" -ForegroundColor Green
+    write-host "##   The CSV file was created on $CurrentPath\wks-new-HRConnector.csv" -ForegroundColor Green
+    write-host "##                                                              ##" -ForegroundColor Green
+    write-host "##################################################################" -ForegroundColor Green
+    write-host
+    Write-host "Return to the lab instructions" -ForegroundColor Yellow
+    Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
+    write-host
 
+    try 
+        {
+            $global:HRConnectorCSVFile = "$($LogPath)HRConnector.csv"
+            "HRScenarios,EmailAddress,ResignationDate,LastWorkingDate,EffectiveDate,YearsOnLevel,OldLevel,NewLevel,PerformanceRemarks,PerformanceRating,ImprovementRemarks,ImprovementRating" | out-file $HRConnectorCSVFile -Encoding utf8
+            $Users = Get-AzureADuser | where-object {$null -ne $_.AssignedLicenses} | Select-Object UserPrincipalName - ErrorAction Stop
+
+            foreach ($User in $Users)
+                {
+                    $EmailAddress = $User.UserPrincipalName
+                    #Resignation block
+                    $RandResignationDate  = Get-Random -Minimum 20 -Maximum 30
+                    $ResignationDate = (Get-Date).AddDays(-$RandResignationDate).ToString("yyyy-MM-ddTH:mm:ssZ")
+                    $RandLastWorkingDate = Get-Random -Minimum 10 -Maximum 20
+                    $LastWorkingDate = (Get-Date).AddDays(-$RandLastWorkingDate).ToString("yyyy-MM-ddTH:mm:ssZ")
+                    $RandEffectiveDate = Get-Random -Minimum 365 -Maximum 1000
+                    $EffectiveDate = (Get-Date).AddDays(-$RandEffectiveDate).ToString("yyyy-MM-ddTH:mm:ssZ")
+                    #Employee level block
+                    $YearsOnLevel = Get-Random -Minimum 1 -Maximum 6
+                    $OldLevel = Get-Random -Minimum 57 -Maximum 64
+                    $NewLevel = $OldLevel--
+                    #performance and performance review block
+                    $RandRating = Get-Random -Minimum 1 -Maximum 4
+                    Switch ($RandRating) 
+                        {
+                            1 
+                                {
+                                    $PerformanceRemarks = "Achieved all commitments and exceptional results that surpassed expectations"
+                                    $PerformanceRating = "1 - Exceeded"
+                                    $ImprovementRemarks = $null
+                                    $ImprovementRating = $null
+                                }
+                            2 
+                                {
+                                    $PerformanceRemarks = "Achieved all commitments and expected results"
+                                    $PerformanceRating = "2 - Achieved"
+                                    $ImprovementRemarks = "Increase the team collaboration"
+                                    $ImprovementRating = "1 - Exceeded"
+                                }
+                            3
+                                {
+                                    $PerformanceRemarks = "Failed to achieve commitments or expected results or both"
+                                    $PerformanceRating = "3 - Underperformed"
+                                    $ImprovementRemarks = "Increase overall performance"
+                                    $ImprovementRating = "2 - Achieved"
+                                }
+                        }
+                    "Resignation,$EmailAddress,$ResignationDate,$LastWorkingDate," | out-file $HRConnectorCSVFile -Encoding utf8 -Append
+                    "Job level change,$EmailAddress,,,$EffectiveDate,$YearsOnLevel,Level $OldLevel,Level $NewLevel" | out-file $HRConnectorCSVFile -Encoding utf8 -Append
+                    "Performance review,$EmailAddress,,,$EffectiveDate,,,,$PerformanceRemarks,$PerformanceRating" | out-file $HRConnectorCSVFile -Encoding utf8 -Append
+                    "Performance improvement plan,$EmailAddress,,,$EffectiveDate,,,,,,$ImprovementRemarks,$ImprovementRating,"  | out-file $HRConnectorCSVFile -Encoding utf8 -Append
+                }
+        }
+        catch 
+        {
+            write-Debug $error[0].Exception
+            logWrite 41 $false "Error creating Azure App for HR Connector"
+            exitScript
+        }
+    if($global:recovery -eq $false)
+        {
+            logWrite 41 $True "Successfully created Azure App for HR Connector."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
 }
 
 # -------------------------------------------------------
@@ -820,6 +932,30 @@ function InsiderRisks_CreateCSVFile
 # -------------------------------------------------------
 function InsiderRisks_UploadCSV
 {
+
+    {
+        $ConnectorJobID = Read-Host "Paste the Connector job ID"
+        if ($null -eq $ConnectorJobID)
+            {
+                $ConnectorJobID = Read-Host "Paste the Connector job ID"
+            }
+        Write-Host
+        write-host "##################################################################" -ForegroundColor Green
+        write-host "##                                                              ##" -ForegroundColor Green
+        write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
+        write-host "##                                                              ##" -ForegroundColor Green
+        write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
+        write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
+        write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
+        write-host "##   JobId     : $ConnectorJobID           ##" -ForegroundColor Green
+        write-host "##   CSV File  : $global:HRConnectorCSVFile           " -ForegroundColor Green
+        write-host "##                                                              ##" -ForegroundColor Green
+        write-host "##################################################################" -ForegroundColor Green
+        Write-Host
+
+        Set-Location -Path "$env:UserProfile\Desktop\SCLabFiles\Scripts"
+        .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
+    }
 
 }
 
@@ -1002,3 +1138,24 @@ if($nextPhase -eq 43)
 #                    .\wks-new-label.ps1
 #                }
 #    }
+ 
+
+function New-WksComp-InsiderRisks
+{
+    ConnectAzureAD  #Call the function
+    Write-Host
+    InsiderRisks_CreateAzureAp #Call the function
+    Write-Host
+    $answer = Read-Host "Press ENTER to continue"
+    Write-Host
+    InsiderRisks_CreateCSVFile #call the function
+    Write-Host
+    $answer = Read-Host "Press ENTER to continue"
+    Write-Host
+    InsiderRisks_UploadCSV #call the function
+    Write-Host
+    $answer = Read-Host "Press ENTER to continue"
+    Write-Host
+
+}
+
