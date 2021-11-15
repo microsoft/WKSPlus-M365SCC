@@ -677,6 +677,7 @@ function SensitivityLabel_Policy
                 $global:nextPhase++ #21
                 Write-Debug "nextPhase set to $global:nextPhase"
             }
+}
 
 #######################################################################################
 #########                  R E T E N T I O N     P O L I C Y                 ##########
