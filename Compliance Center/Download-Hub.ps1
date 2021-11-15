@@ -462,7 +462,7 @@ function ConnectSPO([string]$tenantName)
                 {
                     write-Debug $error[0].Exception
                     Write-Host "Connecting to SharePoint Online..."
-                    Connect-SPOService -Url $AdminURL -ErrorAction stop | Out-Null
+                    Connect-SPOService -Url $AdminURL -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
                 }
                 catch    
                     {
@@ -471,7 +471,7 @@ function ConnectSPO([string]$tenantName)
                                 write-Debug $error[0].Exception
                                 Write-Host "Installing SharePoint Online PowerShell Module..."
                                 Install-Module Microsoft.Online.SharePoint.PowerShell -Force -AllowClobber -ErrorAction stop | Out-Null
-                                Connect-SPOService -Url $AdminURL -ErrorAction stop | Out-Null
+                                Connect-SPOService -Url $AdminURL -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
                             }
                             catch
                                 {
