@@ -54,6 +54,7 @@
 ##
 
 Param (
+    [CmdletBinding()]
     [switch]$debug,
     [Parameter(Mandatory=$False)] [bool]$global:SkipSensitivityLabels = $False,
     [Parameter(Mandatory=$False)] [bool]$global:SkipRetentionPolicies = $False,
