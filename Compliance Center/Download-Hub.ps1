@@ -702,6 +702,7 @@ function RetentionPolicy_GetSiteOwner
             try 
                 {
                     # should be connected to MSOL Service to set site owner
+                    Write-Debug "$siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName"
                     $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
                 }
                 catch 
@@ -736,6 +737,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
             $url = "https://$tenantName.sharepoint.com/sites/$siteName"
             try
                 {
+                    write-debug "$spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
                     $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
                 catch 
@@ -768,6 +770,7 @@ Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]
     if ($SkipRetentionPolicies -eq $false)
         {
             try {
+                    write-Debug "$complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null"
                     $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
                 }
                 catch 
@@ -804,6 +807,7 @@ function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [strin
             Try
                 {
                     #Create compliance retention Policy
+                    write-Debug "$policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null"
                     $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
                 } 
                 catch 
