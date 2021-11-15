@@ -55,11 +55,11 @@
 
 Param (
     [CmdletBinding()]
-    [switch]$debug,
-    [Parameter(Mandatory=$False)] [bool]$global:SkipSensitivityLabels = $False,
-    [Parameter(Mandatory=$False)] [bool]$global:SkipRetentionPolicies = $False,
-    [Parameter(Mandatory=$False)] [bool]$global:SkipDLP = $False,
-    [Parameter(Mandatory=$False)] [bool]$global:SkipInsiderRisks = $False
+    #[switch]$debug,
+    [Parameter(Mandatory=$False)] [bool]$SkipSensitivityLabels = $False,
+    [Parameter(Mandatory=$False)] [bool]$SkipRetentionPolicies = $False,
+    [Parameter(Mandatory=$False)] [bool]$SkipDLP = $False,
+    [Parameter(Mandatory=$False)] [bool]$SkipInsiderRisks = $False
 )
 
 # -----------------------------------------------------------
@@ -594,7 +594,7 @@ function SensitivityLabel_Label
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
 
-    if ($global:SkipSensitivityLabels -eq $false)
+    if ($SkipSensitivityLabels -eq $false)
         {
             $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
@@ -636,7 +636,7 @@ function SensitivityLabel_Policy
     - Need to make sure the labele exists
     #>
 
-    if ($global:SkipSensitivityLabels -eq $false)
+    if ($SkipSensitivityLabels -eq $false)
         {
             try 
                 {
