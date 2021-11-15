@@ -507,7 +507,7 @@ function ConnectPNP([string]$tenantName)
                 {
                     write-Debug $error[0].Exception
                     Write-Host "Connecting to PNP Online..."
-                    Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop | Out-Null
+                    Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
                 }
                 catch    
                     {
@@ -516,7 +516,7 @@ function ConnectPNP([string]$tenantName)
                                 write-Debug $error[0].Exception
                                 Write-Host "Installing PNP Online PowerShell Module..."
                                 Install-Module PNP.PowerShell -Force -AllowClobber -ErrorAction stop | Out-Null
-                                Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop | Out-Null
+                                Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
                             }
                             catch
                                 {
