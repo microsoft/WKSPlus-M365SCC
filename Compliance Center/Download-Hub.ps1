@@ -892,7 +892,6 @@ function DLP_CreateDLPCompliancePolicy
                             New-dlpcompliancepolicy @params
                         }
                 }
-
                 catch 
                     {
                         write-Debug $Error[0].Exception
@@ -913,7 +912,6 @@ function DLP_CreateDLPCompliancePolicy
                 Write-Debug "nextPhase set to $global:nextPhase"       
             }
 }
-
 
 # -------------------------------------------------------
 # DLP - Create DLP Rule (Step 32)
@@ -955,8 +953,8 @@ function DLP_CreateDLPComplianceRule
                 Write-Debug "nextPhase set to $global:nextPhase"   
             }    
 
+        }
 }
-
 
 #######################################################################################
 #########                    I N S I D E R     R I S K S                     ##########
