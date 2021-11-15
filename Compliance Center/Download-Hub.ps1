@@ -470,8 +470,8 @@ function ConnectPNP([string]$tenantName)
     $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
     try 
     {
-        Write-Debug "Get-PNPTenant -ErrorAction stop"
-        $testConnection = Get-PNPTenant -ErrorAction stop | Out-Null #if true (Already Connected)
+        Write-Debug "Get-Get-PnPApp -ErrorAction stop"
+        $testConnection = Get-PnPApp -ErrorAction stop | Out-Null #if true (Already Connected)
     }
     catch
         {
@@ -487,7 +487,7 @@ function ConnectPNP([string]$tenantName)
                             {
                                 write-Debug $error[0].Exception
                                 Write-Host "Installing PNP Online PowerShell Module..."
-                                Install-Module PnpOnline -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Install-Module Install-Module SharePointPnPPowerShellOnline -Force -AllowClobber -ErrorAction stop | Out-Null
                                 Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop | Out-Null
                             }
                             catch
