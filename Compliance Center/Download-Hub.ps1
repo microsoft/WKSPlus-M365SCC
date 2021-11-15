@@ -346,7 +346,7 @@ function ConnectSCC
                 {
                     write-Debug $error[0].Exception
                     Write-Host "Connecting to Compliance Center..."
-                    Connect-IPPSSession -ErrorAction stop | Out-Null
+                    Connect-IPPSSession -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
                 }
                 catch    
                     {
@@ -355,7 +355,7 @@ function ConnectSCC
                                 write-Debug $error[0].Exception
                                 Write-Host "Installing Compliance Center PowerShell Module..."
                                 #Install-Module ExchangeOnlineManagement -Force -AllowClobber #Not required, but it was already installed on the previous step
-                                Connect-IPPSSession -ErrorAction stop | Out-Null
+                                Connect-IPPSSession -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
                             }
                             catch
                                 {
@@ -1067,6 +1067,7 @@ if($nextPhase -eq 6)
 
 if($nextPhase -eq 7)
     {
+        Write-Host $tenantName -ForegroundColor Red
         write-debug "Phase $nextPhase"
         ConnectPNP $tenantName
     }
