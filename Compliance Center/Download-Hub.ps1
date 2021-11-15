@@ -62,6 +62,10 @@ Param (
     [switch]$SkipInsiderRisks
 )
 
+Write-Host $SkipRetentionPolicy -ForegroundColor Red
+Write-Host $SkipRetentionPolicies -ForegroundColor Red
+write-host $SkipDLP -ForegroundColor Red
+
 # -----------------------------------------------------------
 # Variable definition - General
 # -----------------------------------------------------------
@@ -689,9 +693,6 @@ function SensitivityLabel_Policy
 # -------------------------------------------------------
 function RetentionPolicy_GetSiteOwner
 {
-    write-host
-    Write-Host $SkipRetentionPolicy -ForegroundColor Red
-    write-host
     if ($SkipRetentionPolicy -ne "True")
         {
             try 
@@ -761,15 +762,31 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
 # -------------------------------------------------------
 Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
-    try {
-        $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
-        } catch {
-        write-Debug $Error[0].Exception
-        logWrite 23 $false "Unable to create Retention Tag $retentionTagName"
-        exitScript
-    }
-    logWrite 23 $True "Retention Tag $retentionTagName created successfully."
-    $global:nextPhase++
+    if ($SkipRetentionPolicy -ne "True")
+        {
+            try {
+                    $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
+                }
+                catch 
+                    {
+                        write-Debug $Error[0].Exception
+                        logWrite 23 $false "Unable to create Retention Tag $retentionTagName"
+                        exitScript
+                    }
+
+            if($global:recovery -eq $false)
+                    {
+                        logWrite 23 $True "Retention Tag $retentionTagName created successfully."
+                        $global:nextPhase++
+                        Write-Debug "nextPhase set to $global:nextPhase" 
+                    }
+        }
+        else 
+            {
+                logWrite 23 $True "Skipped Retention Policy."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"     
+            }
 }
 
 # -------------------------------------------------------
