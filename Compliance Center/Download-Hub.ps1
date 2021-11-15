@@ -1329,6 +1329,4 @@ function New-WksComp-InsiderRisks
     Write-Host
     $answer = Read-Host "Press ENTER to continue"
     Write-Host
-
 }
-
