@@ -648,7 +648,8 @@ function SensitivityLabel_Policy
         {
             try 
                 {
-                    New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
+                   write-Debug "New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null"
+                   New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
                 } 
                 catch 
                     {
@@ -869,30 +870,48 @@ function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [strin
 # -------------------------------------------------------
 function DLP_CreateDLPCompliancePolicy
 {
-    try{
-        if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
-            {write-host " The DLP Compliance Policy already Exists "}
-
-        else{
-            $params = @{
-                "Name" = "WKS Compliance Policy";
-                "ExchangeLocation" ="All";
-                "OneDriveLocation" = "All";
-                "SharePointLocation" = "All";
-                "EndpointDlpLocation" = "all";
-                "Teamslocation" = "All";
-                "Mode" = "Enable"
+    if ($SkipDLP -eq $false)
+        {        
+            try
+                {
+                    if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
+                        {
+                            write-host " The DLP Compliance Policy already Exists "
+                        }
+                    else
+                        {
+                            $params = @{
+                                "Name" = "WKS Compliance Policy";
+                                "ExchangeLocation" ="All";
+                                "OneDriveLocation" = "All";
+                                "SharePointLocation" = "All";
+                                "EndpointDlpLocation" = "all";
+                                "Teamslocation" = "All";
+                                "Mode" = "Enable"
+                                }
+                            New-dlpcompliancepolicy @params
+                        }
                 }
-                new-dlpcompliancepolicy @params
-            }
-    }
 
-    catch {
-        logWrite 31 $false "unable to create DLP Policy."
-        exit
-    }
-    logWrite 31 $True "Able to Create DLP Policy."
-    $global:nextPhase++
+                catch 
+                    {
+                        write-Debug $Error[0].Exception
+                        logWrite 31 $false "Unable to create DLP Policy."
+                        exitScript
+                    }
+            if($global:recovery -eq $false)
+                {
+                    logWrite 31 $True "Able to Create DLP Policy."
+                    $global:nextPhase++
+                    Write-Debug "nextPhase set to $global:nextPhase" 
+                }
+        }
+        else 
+            {
+                logWrite 31 $True "Skipped DLP."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"       
+            }
 }
 
 
@@ -901,27 +920,41 @@ function DLP_CreateDLPCompliancePolicy
 # -------------------------------------------------------
 function DLP_CreateDLPComplianceRule
 {
-    try{
-       $senstiveinfo = @(@{Name =”Credit Card Number”; minCount = “1”},@{Name =”International Banking Account Number (IBAN)”; minCount = “1”},@{Name =”U.S. Bank Account Number”; minCount = “1”})
+    if ($SkipDLP -eq $false)
+        {
+            try
+                {
+                    $senstiveinfo = @(@{Name =”Credit Card Number”; minCount = “1”},@{Name =”International Banking Account Number (IBAN)”; minCount = “1”},@{Name =”U.S. Bank Account Number”; minCount = “1”})
+                    $Rulevalue = @{
+                        "Name" = "WKS-Copmpliance-Ruleset";
+                        "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver’s license and passport number.";
+                        "Policy" = "WKS Compliance Policy";
+                        "ContentContainsSensitiveInformation"=$senstiveinfo;
+                        "AccessScope"= "NotInOrganization";
+                        "Disabled" =$false;
+                        'ReportSeverityLevel'='High'
+                        }
+                    New-DlpComplianceRule @rulevalue 
+                }
+                catch 
+                    {
+                        write-Debug $Error[0].Exception
+                        logWrite 32 $false "Unable to create DLP Rule."
+                        exitScript
+                    }
+            if($global:recovery -eq $false)
+                {
+                    logWrite 32 $True "Able to Create DLP Rule."
+                    $global:nextPhase++
+                    Write-Debug "nextPhase set to $global:nextPhase" 
+                }
+        else 
+            {
+                logWrite 32 $True "Skipped DLP."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"   
+            }    
 
-        $Rulevalue = @{
-            "Name" = "WKS-Copmpliance-Ruleset";
-            "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver’s license and passport number.";
-            "Policy" = "WKS Compliance Policy";
-            "ContentContainsSensitiveInformation"=$senstiveinfo;
-            "AccessScope"= "NotInOrganization";
-            "Disabled" =$false;
-            'ReportSeverityLevel'='High'
-            }
-            New-DlpComplianceRule @rulevalue 
-    }
-
-    catch {
-        logWrite 32 $false "unable to create DLP Rule."
-        exit
-    }
-    logWrite 32 $True "Able to Create DLP Rule."
-    $global:nextPhase++
 }
 
 
