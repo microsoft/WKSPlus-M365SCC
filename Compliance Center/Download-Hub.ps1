@@ -54,7 +54,11 @@
 #
 
 Param (
-    [switch]$debug
+    [switch]$debug,
+    [Parameter(Mandatory=$False)] [bool]$global:SkipSensitivityLabels = $False,
+    [Parameter(Mandatory=$False)] [bool]$global:SkipRetentionPolicies = $False,
+    [Parameter(Mandatory=$False)] [bool]$global:SkipDLP = $False,
+    [Parameter(Mandatory=$False)] [bool]$global:SkipInsiderRisks = $False
 )
 
 # -----------------------------------------------------------
@@ -589,26 +593,35 @@ function SensitivityLabel_Label
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
 
-    $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
-    $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
-    try 
+    if ($global:SkipSensitivityLabels -eq $false)
         {
-            $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
-        } 
-        catch 
-            {
-                write-Debug $error[0].Exception
-                logWrite 11 $false "Error creating Sensitivity label"
-                exitScript
-            }
-    if($global:recovery -eq $false)
-        {
-            logWrite 11 $True "Successfully created Sensitivity label."
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
+            $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
+            $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
+            try 
+                {
+                    $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
+                } 
+                catch 
+                    {
+                        write-Debug $error[0].Exception
+                        logWrite 11 $false "Error creating Sensitivity label"
+                        exitScript
+                    }
+            if($global:recovery -eq $false)
+                {
+                    logWrite 11 $True "Successfully created Sensitivity label."
+                    $global:nextPhase++
+                    Write-Debug "nextPhase set to $global:nextPhase"
+                }
 
-    goToSleep 30
+            goToSleep 30
+        }
+        else
+            {
+                logWrite 11 $True "Skipped Sensitivity label."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
 
 # -------------------------------------------------------
@@ -622,32 +635,48 @@ function SensitivityLabel_Policy
     - Need to make sure the labele exists
     #>
 
-    try 
+    if ($global:SkipSensitivityLabels -eq $false)
         {
-            New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
-        } 
-        catch 
-            {
-                write-Debug $error[0].Exception
-                logWrite 12 $false "Error creating Sensitivity label policy"
-                exitScript
-            }
-    
-    if($global:recovery -eq $false)
-        {
-            logWrite 12 $True "Successfully created Sensitivity label policy."
-            $global:nextPhase++ #13
-            $global:nextPhase++ #14
-            $global:nextPhase++ #15
-            $global:nextPhase++ #16
-            $global:nextPhase++ #17
-            $global:nextPhase++ #18
-            $global:nextPhase++ #19
-            $global:nextPhase++ #20
-            $global:nextPhase++ #21
-            Write-Debug "nextPhase set to $global:nextPhase"
+            try 
+                {
+                    New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
+                } 
+                catch 
+                    {
+                        write-Debug $error[0].Exception
+                        logWrite 12 $false "Error creating Sensitivity label policy"
+                        exitScript
+                    }
+            
+            if($global:recovery -eq $false)
+                {
+                    logWrite 12 $True "Successfully created Sensitivity label policy."
+                    $global:nextPhase++ #13
+                    $global:nextPhase++ #14
+                    $global:nextPhase++ #15
+                    $global:nextPhase++ #16
+                    $global:nextPhase++ #17
+                    $global:nextPhase++ #18
+                    $global:nextPhase++ #19
+                    $global:nextPhase++ #20
+                    $global:nextPhase++ #21
+                    Write-Debug "nextPhase set to $global:nextPhase"
+                }
         }
-}
+        else
+            {
+                logWrite 12 $True "Skipped Sensitivity label."
+                $global:nextPhase++ #13
+                $global:nextPhase++ #14
+                $global:nextPhase++ #15
+                $global:nextPhase++ #16
+                $global:nextPhase++ #17
+                $global:nextPhase++ #18
+                $global:nextPhase++ #19
+                $global:nextPhase++ #20
+                $global:nextPhase++ #21
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 
 #######################################################################################
 #########                  R E T E N T I O N     P O L I C Y                 ##########
