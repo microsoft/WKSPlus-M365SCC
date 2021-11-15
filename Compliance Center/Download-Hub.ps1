@@ -56,11 +56,13 @@
 Param (
     [CmdletBinding()]
     #[switch]$debug,
-    [Parameter(Mandatory=$False)] [bool]$SkipSensitivityLabels = $False,
-    [Parameter(Mandatory=$False)] [bool]$SkipRetentionPolicies = $False,
-    [Parameter(Mandatory=$False)] [bool]$SkipDLP = $False,
-    [Parameter(Mandatory=$False)] [bool]$SkipInsiderRisks = $False
+    [switch]$SkipSensitivityLabels,
+    [switch]$SkipRetentionPolicies,
+    [switch]$SkipDLP,
+    [switch]$SkipInsiderRisks
 )
+
+write-host -ForegroundColor $SkipSensitivityLabels
 
 # -----------------------------------------------------------
 # Variable definition - General
