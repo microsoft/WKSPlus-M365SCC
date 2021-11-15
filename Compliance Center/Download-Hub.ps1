@@ -943,13 +943,29 @@ function DLP_CreateDLPComplianceRule
             if($global:recovery -eq $false)
                 {
                     logWrite 32 $True "Able to Create DLP Rule."
-                    $global:nextPhase++
+                    $global:nextPhase++ #33
+                    $global:nextPhase++ #34
+                    $global:nextPhase++ #35
+                    $global:nextPhase++ #36
+                    $global:nextPhase++ #37
+                    $global:nextPhase++ #38
+                    $global:nextPhase++ #39
+                    $global:nextPhase++ #40
+                    $global:nextPhase++ #41
                     Write-Debug "nextPhase set to $global:nextPhase" 
                 }
         else 
             {
                 logWrite 32 $True "Skipped DLP."
-                $global:nextPhase++
+                $global:nextPhase++ #33
+                $global:nextPhase++ #34
+                $global:nextPhase++ #35
+                $global:nextPhase++ #36
+                $global:nextPhase++ #37
+                $global:nextPhase++ #38
+                $global:nextPhase++ #39
+                $global:nextPhase++ #40
+                $global:nextPhase++ #41
                 Write-Debug "nextPhase set to $global:nextPhase"   
             }    
 
