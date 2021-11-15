@@ -487,7 +487,7 @@ function ConnectPNP([string]$tenantName)
                             {
                                 write-Debug $error[0].Exception
                                 Write-Host "Installing PNP Online PowerShell Module..."
-                                Install-Module Install-Module SharePointPnPPowerShellOnline -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Install-Module SharePointPnPPowerShellOnline -Force -AllowClobber -ErrorAction stop | Out-Null
                                 Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop | Out-Null
                             }
                             catch
