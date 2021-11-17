@@ -546,8 +546,8 @@ function SensitivityLabel_Label
     #>
 
     #label
-    $labelDisplayName = "WKS Highly Confidential2"
-    $global:labelName = "WKS-Highly-Confidential2"
+    $labelDisplayName = "WKS Highly Confidential3"
+    $global:labelName = "WKS-Highly-Confidential3"
     $labelTooltip = "Contains Highly confidential info"
     $labelComment = "Documents with this label contain sensitive data."
 
@@ -557,7 +557,7 @@ function SensitivityLabel_Label
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             try 
                 {
-                    write-Debug "$labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
+                    write-Debug "$labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType file,Email,Site,UnifiedGroup -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy private -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
                     $labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
                 } 
                 catch 
@@ -595,7 +595,7 @@ function SensitivityLabel_Policy
     #>
 
     #label policy
-    $labelPolicyName = "WKS-Highly-confidential-publish2"
+    $labelPolicyName = "WKS-Highly-confidential-publish3"
 
     if ($SkipSensitivityLabels -eq $false)
         {
