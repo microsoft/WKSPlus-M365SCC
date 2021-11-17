@@ -603,7 +603,7 @@ function SensitivityLabel_Label
         {
             write-Debug "(Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName"
             $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
-            write-Debug "$Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL""
+            write-Debug "$Encpermission = $domainname + :VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             try 
                 {
