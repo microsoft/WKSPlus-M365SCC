@@ -688,7 +688,7 @@ function RetentionPolicy_GetSiteOwner
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
     #Site Variables
-    $global:siteName = "wks-compliance-center"
+    $global:siteName = "wks-compliance-center3"
     $siteStorageQuota = 1024
     $siteResourceQuota = 1024
     $siteTemplate = "STS#3"
@@ -698,7 +698,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:site
             $url = "https://$tenantName.sharepoint.com/sites/$global:siteName"
             try
                 {
-                    write-debug "$spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
+                    write-debug "New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
                     $spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
                 catch 
@@ -739,7 +739,7 @@ Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [
     if ($SkipRetentionPolicies -eq $false)
         {
             try {
-                    write-Debug "$complianceTagStatus = new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null"
+                    write-Debug "new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null"
                     $complianceTagStatus = new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
                 }
                 catch 
@@ -779,7 +779,7 @@ function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [strin
             Try
                 {
                     #Create compliance retention Policy
-                    write-Debug "$policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null"
+                    write-Debug "New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null"
                     $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
                 } 
                 catch 
@@ -793,6 +793,7 @@ function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [strin
             #then, if successfull, create rule in policy
             try 
                 {
+                    write-Debug "New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $global:retentionTagName -ErrorAction Stop | Out-Null"
                     $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $global:retentionTagName -ErrorAction Stop | Out-Null
                     #sleep for 240 seconds
                     #goToSleep 240
