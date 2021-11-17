@@ -546,16 +546,14 @@ function SensitivityLabel_Label
     #>
 
     #label
-    $labelDisplayName = "WKS Highly Confidential1"
-    $global:labelName = "WKS-Highly-Confidential1"
+    $labelDisplayName = "WKS Highly Confidential2"
+    $global:labelName = "WKS-Highly-Confidential2"
     $labelTooltip = "Contains Highly confidential info"
     $labelComment = "Documents with this label contain sensitive data."
 
     if ($SkipSensitivityLabels -eq $false)
         {
-            write-Debug "(Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName"
             $domainName = (Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName
-            write-Debug "$Encpermission = $domainname + :VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             try 
                 {
@@ -597,7 +595,7 @@ function SensitivityLabel_Policy
     #>
 
     #label policy
-    $labelPolicyName = "WKS-Highly-confidential-publish1"
+    $labelPolicyName = "WKS-Highly-confidential-publish2"
 
     if ($SkipSensitivityLabels -eq $false)
         {
