@@ -546,8 +546,8 @@ function SensitivityLabel_Label
     #>
 
     #label
-    $labelDisplayName = "WKS Highly Confidential"
-    $global:labelName = "WKS-Highly-Confidential"
+    $labelDisplayName = "WKS Highly Confidential1"
+    $global:labelName = "WKS-Highly-Confidential1"
     $labelTooltip = "Contains Highly confidential info"
     $labelComment = "Documents with this label contain sensitive data."
 
@@ -597,7 +597,7 @@ function SensitivityLabel_Policy
     #>
 
     #label policy
-    $labelPolicyName = "WKS-Highly-confidential-publish"
+    $labelPolicyName = "WKS-Highly-confidential-publish1"
 
     if ($SkipSensitivityLabels -eq $false)
         {
