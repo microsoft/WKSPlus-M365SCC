@@ -688,7 +688,7 @@ function RetentionPolicy_GetSiteOwner
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:siteName, [string]$global:siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
     #Site Variables
-    $global:siteName = "wks-compliance-center3"
+    $global:siteName = "wks-compliance-center4"
     $siteStorageQuota = 1024
     $siteResourceQuota = 1024
     $siteTemplate = "STS#3"
@@ -698,6 +698,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:site
             $url = "https://$tenantName.sharepoint.com/sites/$global:siteName"
             try
                 {
+                    write-host $global:siteOwner -ForegroundColor Red
                     write-debug "New-spoSite -Url $url -title $global:siteName -Owner $global:siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
                     $spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $global:siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
