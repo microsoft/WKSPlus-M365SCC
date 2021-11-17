@@ -1297,12 +1297,14 @@ if($nextPhase -eq 41)
     {
         write-debug "Phase $nextPhase"
         InsiderRisks_CreateAzureApp
+        $answer = Read-Host "Press ENTER to continue"
     }
 
 if($nextPhase -eq 42)
     {
         write-debug "Phase $nextPhase"
         InsiderRisks_CreateCSVFile
+        $answer = Read-Host "Press ENTER to continue"
     }
 
 if($nextPhase -eq 43)
