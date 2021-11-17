@@ -1157,9 +1157,6 @@ if($debug)
     Start-Transcript -Path "$($LogPath)download-debug.txt"
 }
 
-    $isRecordLabel = $false
-
-
 if(!(Test-Path($logCSV)))
     {
         # if log doesn't exist then must be first time we run this, so go to initialization
