@@ -1010,12 +1010,12 @@ function InsiderRisks_CreateAzureApp
         catch 
         {
             write-Debug $error[0].Exception
-            logWrite 41 $false "Error creating Azure App for HR Connector"
+            logWrite 41 $false "Error creating the Azure App for HR Connector"
             exitScript
         }
     if($global:recovery -eq $false)
         {
-            logWrite 41 $True "Successfully created Azure App for HR Connector."
+            logWrite 41 $True "Successfully created the Azure App for HR Connector."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
@@ -1043,7 +1043,7 @@ function InsiderRisks_CreateCSVFile
         {
             $global:HRConnectorCSVFile = "$($LogPath)HRConnector.csv"
             "HRScenarios,EmailAddress,ResignationDate,LastWorkingDate,EffectiveDate,YearsOnLevel,OldLevel,NewLevel,PerformanceRemarks,PerformanceRating,ImprovementRemarks,ImprovementRating" | out-file $HRConnectorCSVFile -Encoding utf8
-            $Users = Get-AzureADuser | where-object {$null -ne $_.AssignedLicenses} | Select-Object UserPrincipalName - ErrorAction Stop
+            $Users = Get-AzureADuser | where-object {$null -ne $_.AssignedLicenses} | Select-Object UserPrincipalName -ErrorAction Stop
 
             foreach ($User in $Users)
                 {
@@ -1085,21 +1085,21 @@ function InsiderRisks_CreateCSVFile
                                     $ImprovementRating = "2 - Achieved"
                                 }
                         }
-                    "Resignation,$EmailAddress,$ResignationDate,$LastWorkingDate," | out-file $HRConnectorCSVFile -Encoding utf8 -Append
-                    "Job level change,$EmailAddress,,,$EffectiveDate,$YearsOnLevel,Level $OldLevel,Level $NewLevel" | out-file $HRConnectorCSVFile -Encoding utf8 -Append
-                    "Performance review,$EmailAddress,,,$EffectiveDate,,,,$PerformanceRemarks,$PerformanceRating" | out-file $HRConnectorCSVFile -Encoding utf8 -Append
-                    "Performance improvement plan,$EmailAddress,,,$EffectiveDate,,,,,,$ImprovementRemarks,$ImprovementRating,"  | out-file $HRConnectorCSVFile -Encoding utf8 -Append
+                    "Resignation,$EmailAddress,$ResignationDate,$LastWorkingDate," | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
+                    "Job level change,$EmailAddress,,,$EffectiveDate,$YearsOnLevel,Level $OldLevel,Level $NewLevel" | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
+                    "Performance review,$EmailAddress,,,$EffectiveDate,,,,$PerformanceRemarks,$PerformanceRating" | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
+                    "Performance improvement plan,$EmailAddress,,,$EffectiveDate,,,,,,$ImprovementRemarks,$ImprovementRating,"  | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
                 }
         }
         catch 
         {
             write-Debug $error[0].Exception
-            logWrite 42 $false "Error creating Azure App for HR Connector"
+            logWrite 42 $false "Error creating the HRConnector.csv file"
             exitScript
         }
     if($global:recovery -eq $false)
         {
-            logWrite 42 $True "Successfully created Azure App for HR Connector."
+            logWrite 42 $True "Successfully created the HRConnector.csv file."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
@@ -1138,12 +1138,12 @@ function InsiderRisks_UploadCSV
         catch 
         {
             write-Debug $error[0].Exception
-            logWrite 43 $false "Error creating Azure App for HR Connector"
+            logWrite 43 $false "Error uploading the HRConnector.csv file"
             exitScript
         }
     if($global:recovery -eq $false)
         {
-            logWrite 43 $True "Successfully created Azure App for HR Connector."
+            logWrite 43 $True "Successfully creating the HRConnector.csv file."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
