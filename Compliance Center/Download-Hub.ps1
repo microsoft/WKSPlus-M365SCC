@@ -726,7 +726,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:site
 # -------------------------------------------------------
 # Retention Policy - Create Compliance Tag (Step 23)
 # -------------------------------------------------------
-Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [string]$retentionTagComment, [bool]$global:isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
+Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
     # Tag Variables
     $global:retentionTagName = "WKS-Compliance-Tag5"
@@ -734,13 +734,14 @@ Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [
     $retentionTagAction = "KeepAndDelete"
     $retentionTagDuration = 3
     $retentionTagType = "ModificationAgeInDays"
-    $global:isRecordLabel = $false
+    #$isRecordLabel = $false
+    $isRecordLabel = 0
     
     if ($SkipRetentionPolicies -eq $false)
         {
             try {
-                    write-Debug "New-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $global:isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType -ErrorAction Stop | Out-Null"
-                    $complianceTagStatus = New-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $global:isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType -ErrorAction Stop | Out-Null
+                    write-Debug "New-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType -ErrorAction Stop | Out-Null"
+                    $complianceTagStatus = New-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType -ErrorAction Stop | Out-Null
                 }
                 catch 
                     {
@@ -1263,7 +1264,7 @@ if($nextPhase -eq 22)
 if($nextPhase -eq 23)
     {
         write-debug "Phase $nextPhase"
-        RetentionPolicy_CreateComplianceTag $global:retentionTagName $retentionTagComment $global:isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
+        RetentionPolicy_CreateComplianceTag $global:retentionTagName $retentionTagComment $isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
     }
 
 if($nextPhase -eq 24)
