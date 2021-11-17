@@ -242,7 +242,15 @@ function ConnectAzureAD
     if($global:recovery -eq $false)
         {
             logWrite 1 $true "Successfully connected to Azure AD."
-            $global:nextPhase++
+            if ($InsiderRisksOnly -eq $true)
+                {
+                    $global:nextPhase = 41
+                }
+                else 
+                    {
+                        $global:nextPhase++
+                    }
+            
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }
@@ -1183,119 +1191,19 @@ if(!(Test-Path($logCSV)))
 # -------------------------------------------------------
 # use variable to control phases
 # -------------------------------------------------------
-if($nextPhase -eq 1)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectAzureAD
-    }
-
-if($nextPhase -eq 2)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectMSOL
-    }
-
-if($nextPhase -eq 3)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectEXO
-    }
-
-if($nextPhase -eq 4)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectSCC
-    }
-
-if($nextPhase -eq 5)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectTeams
-    }
-
-if($nextPhase -eq 6)
-    {
-        write-debug "Phase $nextPhase"
-        $tenantName = getdomain
-        write-debug "$tenantName Returned"
-    }
-
-if($nextPhase -eq 7)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectSPO $tenantName
-    }
-
-if($nextPhase -eq 8)
-    {
-        write-debug "Phase $nextPhase"
-        ConnectPNP $tenantName
-    }
-
-if($nextPhase -eq 9)
-    {
-        write-debug "Phase $nextPhase"
-        downloadscripts
-    }
-
-if($nextPhase -eq 11)
-    {
-        write-debug "Phase $nextPhase"
-        SensitivityLabel_Label
-    }
-
-if($nextPhase -eq 12)
-    {
-        write-debug "Phase $nextPhase"
-        SensitivityLabel_Policy
-    }
-
-if($nextPhase -eq 21)
-    {
-        write-debug "Phase $nextPhase"
-        RetentionPolicy_GetSiteOwner
-    }
-
-if($nextPhase -eq 22)
-    {
-        write-debug "Phase $nextPhase"
-        RetentionPolicy_CreateSPOSite $tenantName $siteName $siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
-    }
-
-if($nextPhase -eq 23)
-    {
-        write-debug "Phase $nextPhase"
-        RetentionPolicy_CreateComplianceTag $retentionTagName $retentionTagComment $isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
-    }
-
-if($nextPhase -eq 24)
-    {
-        write-debug "Phase $nextPhase"
-        RetentionPolicy_NewRetentionPolicy $retentionPolicyName $tenantName $siteName $retentionTagName
-    }
-
-if($nextPhase -eq 31)
-    {
-        write-debug "Phase $nextPhase"
-        DLP_CreateDLPCompliancePolicy
-    }
-
-if($nextPhase -eq 32)
-    {
-        write-debug "Phase $nextPhase"
-        DLP_CreateDLPComplianceRule
-    }
 
 if($nextPhase -eq 41)
     {
         write-debug "Phase $nextPhase"
         InsiderRisks_CreateAzureApp
+        $answer = Read-Host "Press ENTER to continue"
     }
 
 if($nextPhase -eq 42)
     {
         write-debug "Phase $nextPhase"
         InsiderRisks_CreateCSVFile
+        $answer = Read-Host "Press ENTER to continue"
     }
 
 if($nextPhase -eq 43)
