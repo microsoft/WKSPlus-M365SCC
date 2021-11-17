@@ -656,8 +656,8 @@ function RetentionPolicy_GetSiteOwner
             try 
                 {
                     # should be connected to MSOL Service to set site owner
-                    write-debug "$siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like admin@*}).UserPrincipalName"
-                    $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
+                    write-debug "$global:siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like admin@*}).UserPrincipalName"
+                    $global:siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
                 }
                 catch 
                     {
@@ -671,7 +671,7 @@ function RetentionPolicy_GetSiteOwner
                     logWrite 21 $True "Successfully got the Site Owner ."
                     $global:nextPhase++
                     Write-Debug "nextPhase set to $global:nextPhase"
-                    return $siteOwner
+                    return $global:siteOwner
                 }
         }
         else 
@@ -685,7 +685,7 @@ function RetentionPolicy_GetSiteOwner
 # -------------------------------------------------------
 # Retention policy - Create Sharepoint Online Site (Step 22)
 # -------------------------------------------------------
-function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
+function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:siteName, [string]$global:siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
     #Site Variables
     $global:siteName = "wks-compliance-center3"
@@ -698,8 +698,8 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:site
             $url = "https://$tenantName.sharepoint.com/sites/$global:siteName"
             try
                 {
-                    write-debug "New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
-                    $spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
+                    write-debug "New-spoSite -Url $url -title $global:siteName -Owner $global:siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
+                    $spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $global:siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
                 catch 
                     {
@@ -1257,7 +1257,7 @@ if($nextPhase -eq 21)
 if($nextPhase -eq 22)
     {
         write-debug "Phase $nextPhase"
-        RetentionPolicy_CreateSPOSite $tenantName $global:siteName $siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
+        RetentionPolicy_CreateSPOSite $tenantName $global:siteName $global:siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
     }
 
 if($nextPhase -eq 23)
