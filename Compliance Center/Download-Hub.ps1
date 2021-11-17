@@ -546,8 +546,8 @@ function SensitivityLabel_Label
     #>
 
     #label
-    $labelDisplayName = "WKS Highly Confidential3"
-    $global:labelName = "WKS-Highly-Confidential3"
+    $labelDisplayName = "WKS Highly Confidential"
+    $global:labelName = "WKS-Highly-Confidential"
     $labelTooltip = "Contains Highly confidential info"
     $labelComment = "Documents with this label contain sensitive data."
 
@@ -595,7 +595,7 @@ function SensitivityLabel_Policy
     #>
 
     #label policy
-    $labelPolicyName = "WKS-Highly-confidential-publish3"
+    $labelPolicyName = "WKS-Highly-confidential-publish"
 
     if ($SkipSensitivityLabels -eq $false)
         {
@@ -688,7 +688,7 @@ function RetentionPolicy_GetSiteOwner
 function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:siteName, [string]$global:siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
     #Site Variables
-    $global:siteName = "wks-compliance-center4"
+    $global:siteName = "wks-compliance-center6"
     $siteStorageQuota = 1024
     $siteResourceQuota = 1024
     $siteTemplate = "STS#3"
@@ -729,7 +729,7 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:site
 Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [string]$retentionTagComment, [bool]$global:isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
     # Tag Variables
-    $global:retentionTagName = "WKS-Compliance-Tag"
+    $global:retentionTagName = "WKS-Compliance-Tag5"
     $retentionTagComment = "Keep and delete tag - 3 Days"
     $retentionTagAction = "KeepAndDelete"
     $retentionTagDuration = 3
