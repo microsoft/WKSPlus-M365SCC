@@ -735,7 +735,7 @@ Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [
     $retentionTagDuration = 3
     $retentionTagType = "ModificationAgeInDays"
     #$isRecordLabel = $false
-    $isRecordLabel = 0
+
     
     if ($SkipRetentionPolicies -eq $false)
         {
@@ -1156,6 +1156,8 @@ if($debug)
     $DebugPreference = "Continue"
     Start-Transcript -Path "$($LogPath)download-debug.txt"
 }
+
+    $isRecordLabel = $false
 
 
 if(!(Test-Path($logCSV)))
