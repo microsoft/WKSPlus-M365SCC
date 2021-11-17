@@ -557,7 +557,7 @@ function SensitivityLabel_Label
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             try 
                 {
-                    #write-Debug "$labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType file,Email,Site,UnifiedGroup -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy private -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
+                    write-Debug "New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType file,Email,Site,UnifiedGroup -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy private -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
                     $labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
                 } 
                 catch 
@@ -656,7 +656,7 @@ function RetentionPolicy_GetSiteOwner
             try 
                 {
                     # should be connected to MSOL Service to set site owner
-                    Write-Debug "$siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName"
+                    write-debug "$siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like admin@*}).UserPrincipalName"
                     $siteOwner = (Get-MsolUser -ErrorAction SilentlyContinue | Where-Object{$_.UserPrincipalName -like "admin@*"}).UserPrincipalName
                 }
                 catch 
