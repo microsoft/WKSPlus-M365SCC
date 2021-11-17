@@ -918,14 +918,16 @@ function DLP_CreateDLPCompliancePolicy
 # -------------------------------------------------------
 function DLP_CreateDLPComplianceRule
 {
+    write-host $SkipDLP -ForegroundColor Red
     if ($SkipDLP -eq $false)
         {
+            write-host "bingo" -ForegroundColor Red
             try
                 {
                     $senstiveinfo = @(@{Name =”Credit Card Number”; minCount = “1”},@{Name =”International Banking Account Number (IBAN)”; minCount = “1”},@{Name =”U.S. Bank Account Number”; minCount = “1”})
                     $Rulevalue = @{
                         "Name" = "WKS-Copmpliance-Ruleset";
-                        "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver’s license and passport number.";
+                        "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver's license and passport number.";
                         "Policy" = "WKS Compliance Policy";
                         "ContentContainsSensitiveInformation"=$senstiveinfo;
                         "AccessScope"= "NotInOrganization";
@@ -954,6 +956,7 @@ function DLP_CreateDLPComplianceRule
                     $global:nextPhase++ #41
                     Write-Debug "nextPhase set to $global:nextPhase" 
                 }
+        }
         else 
             {
                 logWrite 32 $True "Skipped DLP."
@@ -968,8 +971,6 @@ function DLP_CreateDLPComplianceRule
                 $global:nextPhase++ #41
                 Write-Debug "nextPhase set to $global:nextPhase"   
             }    
-
-        }
 }
 
 #######################################################################################
