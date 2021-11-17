@@ -665,12 +665,13 @@ function RetentionPolicy_GetSiteOwner
                         logWrite 21 $false "Failed to get or set siteOwner variable."
                         exitScript
                     }
-            return $siteOwner
+            
             if($global:recovery -eq $false)
                 {
                     logWrite 21 $True "Successfully got the Site Owner ."
                     $global:nextPhase++
                     Write-Debug "nextPhase set to $global:nextPhase"
+                    return $siteOwner
                 }
         }
         else 
