@@ -668,10 +668,10 @@ function RetentionPolicy_GetSiteOwner
             
             if($global:recovery -eq $false)
                 {
-                    logWrite 21 $True "Successfully got the Site Owner ."
+                    logWrite 21 $True "Successfully got the Site Owner."
                     $global:nextPhase++
                     Write-Debug "nextPhase set to $global:nextPhase"
-                    return $global:siteOwner
+                    return $global:siteOwner | Out-Null
                 }
         }
         else 
@@ -698,7 +698,8 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:site
             $url = "https://$tenantName.sharepoint.com/sites/$global:siteName"
             try
                 {
-                    write-host $global:siteOwner -ForegroundColor Red
+                    write-host $OWNER1 $global:siteOwner -ForegroundColor Red
+                    write-host $OWNER2 $siteOwner -ForegroundColor Red
                     write-debug "New-spoSite -Url $url -title $global:siteName -Owner $global:siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
                     $spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $global:siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
@@ -740,8 +741,8 @@ Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [
     if ($SkipRetentionPolicies -eq $false)
         {
             try {
-                    write-Debug "new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null"
-                    $complianceTagStatus = new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
+                    write-Debug "New-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType -ErrorAction Stop | Out-Null"
+                    $complianceTagStatus = New-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType -ErrorAction Stop | Out-Null
                 }
                 catch 
                     {
