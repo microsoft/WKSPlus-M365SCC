@@ -242,7 +242,14 @@ function ConnectAzureAD
     if($global:recovery -eq $false)
         {
             logWrite 1 $true "Successfully connected to Azure AD."
-            $global:nextPhase++
+            if ($InsiderRisksOnly -eq $true)
+            {
+                $global:nextPhase = 41
+            }
+            else 
+                {
+                    $global:nextPhase++
+                }
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }
