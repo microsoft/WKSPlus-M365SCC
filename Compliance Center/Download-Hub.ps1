@@ -63,62 +63,6 @@ Param (
 )
 
 # -----------------------------------------------------------
-# Variable definition - General
-# -----------------------------------------------------------
-$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
-$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Download_Log.csv"
-$global:nextPhase = 1
-$global:recovery = $false
-
-# -----------------------------------------------------------
-# Variable definition - Sensitivity Labels (Steps 11-12)
-# -----------------------------------------------------------
-#label
-$labelDisplayName = "WKS Highly Confidential"
-$labelName = "WKS-Highly-Confidential"
-$labelTooltip = "Contains Highly confidential info"
-$labelComment = "Documents with this label contain sensitive data."
-#label policy
-$labelPolicyName = "WKS-Highly-confidential-publish"
-
-# -----------------------------------------------------------
-# Variable definition - Retention Policies (Steps 21-28)
-# -----------------------------------------------------------
-#Site Variables
-$siteName = "wks-compliance-center"
-$siteStorageQuota = 1024
-$siteResourceQuota = 1024
-$siteTemplate = "STS#3"
-# Tag Variables
-$retentionTagName = "WKS-Compliance-Tag"
-$retentionTagComment = "Keep and delete tag - 3 Days"
-$retentionTagAction = "KeepAndDelete"
-$retentionTagDuration = 3
-$retentionTagType = "ModificationAgeInDays"
-$isRecordLabel = $false
-# Policy Variables
-$retentionPolicyName = "WKS-Compliance-policy"
-
-# -----------------------------------------------------------
-# Variable definition - DLP (Steps 31-21)
-# -----------------------------------------------------------
-
-# -----------------------------------------------------------
-# Variable definition - InsiderRisk (Steps 41-24)
-# -----------------------------------------------------------
-
-# -----------------------------------------------------------
-# Debug mode
-# -----------------------------------------------------------
-$oldDebugPreference = $DebugPreference
-if($debug)
-{
-    write-debug "Debug Enabled"
-    $DebugPreference = "Continue"
-    Start-Transcript -Path "$($LogPath)download-debug.txt"
-}
-
-# -----------------------------------------------------------
 # Write the log
 # -----------------------------------------------------------
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -601,6 +545,12 @@ function SensitivityLabel_Label
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
 
+    #label
+    $labelDisplayName = "WKS Highly Confidential"
+    $global:labelName = "WKS-Highly-Confidential"
+    $labelTooltip = "Contains Highly confidential info"
+    $labelComment = "Documents with this label contain sensitive data."
+
     if ($SkipSensitivityLabels -eq $false)
         {
             write-Debug "(Get-AcceptedDomain | Where-Object{$_.Default -eq $true}).DomainName"
@@ -609,8 +559,8 @@ function SensitivityLabel_Label
             $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
             try 
                 {
-                    write-Debug "$labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
-                    $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
+                    write-Debug "$labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null"
+                    $labelStatus = New-Label -DisplayName $labelDisplayName -Name $global:labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
                 } 
                 catch 
                     {
@@ -646,12 +596,15 @@ function SensitivityLabel_Policy
     - Need to make sure the labele exists
     #>
 
+    #label policy
+    $labelPolicyName = "WKS-Highly-confidential-publish"
+
     if ($SkipSensitivityLabels -eq $false)
         {
             try 
                 {
-                   write-Debug "New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null"
-                   New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
+                   write-Debug "New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $global:labelName -ErrorAction stop | Out-Null"
+                   New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $global:labelName -ErrorAction stop | Out-Null
                 } 
                 catch 
                     {
@@ -733,25 +686,31 @@ function RetentionPolicy_GetSiteOwner
 # -------------------------------------------------------
 # Retention policy - Create Sharepoint Online Site (Step 22)
 # -------------------------------------------------------
-function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
+function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$global:siteName, [string]$siteOwner, [int]$siteStorageQuota, [int]$siteResourceQuota, [string]$siteTemplate)
 {
+    #Site Variables
+    $global:siteName = "wks-compliance-center"
+    $siteStorageQuota = 1024
+    $siteResourceQuota = 1024
+    $siteTemplate = "STS#3"
+        
     if ($SkipRetentionPolicies -eq $false)
         {
-            $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+            $url = "https://$tenantName.sharepoint.com/sites/$global:siteName"
             try
                 {
-                    write-debug "$spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
-                    $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
+                    write-debug "$spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null"
+                    $spoSiteCreationStatus = New-spoSite -Url $url -title $global:siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
                 } 
                 catch 
                     {
                         write-Debug $error[0].Exception
-                        logWrite 22 $false "Unable to create the SharePoint site $siteName."
+                        logWrite 22 $false "Unable to create the SharePoint site $global:siteName."
                         exitScript
                     }
             if($global:recovery -eq $false)
                 {
-                    logWrite 22 $True "$siteName site created successfully."
+                    logWrite 22 $True "$global:siteName site created successfully."
                     $global:nextPhase++
                     Write-Debug "nextPhase set to $global:nextPhase"
                 }
@@ -768,24 +727,32 @@ function RetentionPolicy_CreateSPOSite([string]$tenantName, [string]$siteName, [
 # -------------------------------------------------------
 # Retention Policy - Create Compliance Tag (Step 23)
 # -------------------------------------------------------
-Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
+Function RetentionPolicy_CreateComplianceTag([string]$global:retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
+    # Tag Variables
+    $global:retentionTagName = "WKS-Compliance-Tag"
+    $retentionTagComment = "Keep and delete tag - 3 Days"
+    $retentionTagAction = "KeepAndDelete"
+    $retentionTagDuration = 3
+    $retentionTagType = "ModificationAgeInDays"
+    $isRecordLabel = $false
+    
     if ($SkipRetentionPolicies -eq $false)
         {
             try {
-                    write-Debug "$complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null"
-                    $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
+                    write-Debug "$complianceTagStatus = new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null"
+                    $complianceTagStatus = new-ComplianceTag -Name $global:retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
                 }
                 catch 
                     {
                         write-Debug $Error[0].Exception
-                        logWrite 23 $false "Unable to create Retention Tag $retentionTagName"
+                        logWrite 23 $false "Unable to create Retention Tag $global:retentionTagName"
                         exitScript
                     }
 
         if($global:recovery -eq $false)
                 {
-                    logWrite 23 $True "Retention Tag $retentionTagName created successfully."
+                    logWrite 23 $True "Retention Tag $global:retentionTagName created successfully."
                     $global:nextPhase++
                     Write-Debug "nextPhase set to $global:nextPhase" 
                     }
@@ -801,11 +768,14 @@ Function RetentionPolicy_CreateComplianceTag([string]$retentionTagName, [string]
 # -------------------------------------------------------
 # Retention Policy - Create Retention Policy (Step 24)
 # -------------------------------------------------------
-function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$siteName, [string]$retentionTagName)
+function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [string]$global:siteName, [string]$global:retentionTagName)
 {
+    # Policy Variables
+    $retentionPolicyName = "WKS-Compliance-policy"
+    
     if ($SkipRetentionPolicies -eq $false)
         {
-            $url = "https://$tenantName.sharepoint.com/sites/$siteName"
+            $url = "https://$tenantName.sharepoint.com/sites/$global:siteName"
             #try to create policy first
             Try
                 {
@@ -824,7 +794,7 @@ function RetentionPolicy_NewRetentionPolicy([string]$retentionPolicyName, [strin
             #then, if successfull, create rule in policy
             try 
                 {
-                    $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName -ErrorAction Stop | Out-Null
+                    $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $global:retentionTagName -ErrorAction Stop | Out-Null
                     #sleep for 240 seconds
                     #goToSleep 240
                 }
@@ -985,7 +955,7 @@ function InsiderRisks_CreateAzureApp
     try
         {
             $AzureADAppReg = New-AzureADApplication -DisplayName HRConnector -AvailableToOtherTenants $false -ErrorAction Stop
-            $global:appname = $AzureADAppReg.DisplayName
+            $appname = $AzureADAppReg.DisplayName
             $global:appid = $AzureADAppReg.AppID
             $AzureTenantID = Get-AzureADTenantDetail
             $global:tenantid = $AzureTenantID.ObjectId
@@ -996,7 +966,7 @@ function InsiderRisks_CreateAzureApp
             write-host "##                                                              ##" -ForegroundColor Green
             write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
             write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##   App name  : $global:appname                                    ##" -ForegroundColor Green
+            write-host "##   App name  : $appname                                    ##" -ForegroundColor Green
             write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
             write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
             write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
@@ -1164,8 +1134,29 @@ function exitScript
 }
 
 # -------------------------------------------------------
-# Script start here
+# FUNCTION - Start-SnCCompliance
 # -------------------------------------------------------
+
+# -------------------------------------------------------
+# Variable definition - General
+# -------------------------------------------------------
+$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Download_Log.csv"
+$global:nextPhase = 1
+$global:recovery = $false
+
+# -----------------------------------------------------------
+# Debug mode
+# -----------------------------------------------------------
+$oldDebugPreference = $DebugPreference
+if($debug)
+{
+    write-debug "Debug Enabled"
+    $DebugPreference = "Continue"
+    Start-Transcript -Path "$($LogPath)download-debug.txt"
+}
+
+
 if(!(Test-Path($logCSV)))
     {
         # if log doesn't exist then must be first time we run this, so go to initialization
@@ -1266,19 +1257,19 @@ if($nextPhase -eq 21)
 if($nextPhase -eq 22)
     {
         write-debug "Phase $nextPhase"
-        RetentionPolicy_CreateSPOSite $tenantName $siteName $siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
+        RetentionPolicy_CreateSPOSite $tenantName $global:siteName $siteOwner $siteStorageQuota $siteResourceQuota $siteTemplate
     }
 
 if($nextPhase -eq 23)
     {
         write-debug "Phase $nextPhase"
-        RetentionPolicy_CreateComplianceTag $retentionTagName $retentionTagComment $isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
+        RetentionPolicy_CreateComplianceTag $global:retentionTagName $retentionTagComment $isRecordLabel $retentionTagAction $retentionTagDuration $retentionTagType
     }
 
 if($nextPhase -eq 24)
     {
         write-debug "Phase $nextPhase"
-        RetentionPolicy_NewRetentionPolicy $retentionPolicyName $tenantName $siteName $retentionTagName
+        RetentionPolicy_NewRetentionPolicy $retentionPolicyName $tenantName $global:siteName $global:retentionTagName
     }
 
 if($nextPhase -eq 31)
