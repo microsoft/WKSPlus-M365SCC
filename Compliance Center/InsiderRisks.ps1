@@ -237,12 +237,10 @@ function ConnectMsol
         if($global:recovery -eq $false)
             {
                 logWrite 2 $true "Successfully connected to Microsoft Online"
-                $global:nextPhase+++
+                $global:nextPhase++
                 Write-Debug "nextPhase set to $global:nextPhase"
             }
 }
-
-
 
 # -------------------------------------------------------
 # Download Workshop Script (Step 9)
