@@ -225,7 +225,7 @@ createPolicy
 }
 
 if ($nextPhase -ge 6){
-    $nextScript = $LogPath + "./wks-new-retention.ps1"
+    $nextScript = $LogPath + "wks-new-retention.ps1"
     logwrite 6 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript
