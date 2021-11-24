@@ -1,3 +1,7 @@
+Param (
+    [switch]$debug
+)
+
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\download.csv"
@@ -122,11 +126,40 @@ function downloadscriptRetention
     $global:nextPhase++
 }
 
+function downloadscriptadaptivescope
+{
+
+    try{
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-Adaptive-scope.ps1 -OutFile c:\temp\wks-new-Adaptive-scope.ps1
+    }
+    catch {
+        logWrite 4 $false "Unable to download the Script! Exiting."
+        exit
+    }
+    logWrite 4 $True "The Script has been downloaded ."
+    $global:nextPhase++
+}
+
+Function downloadinsiderrisks
+{
+
+    try{
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/InsiderRisks.ps1 -OutFile c:\temp\InsiderRisks.ps1
+    }
+    catch {
+        logWrite 5 $false "Unable to download the Script! Exiting."
+        exit
+    }
+    logWrite 5 $True "The Script has been downloaded ."
+    $global:nextPhase++
+}
+
+
 function exitScript
 {
     #remove psession if fails only
     #Get-PSSession | Remove-PSSession
-    logWrite 4 $true "Session removed successfully."
+    logWrite 6 $true "Session removed successfully."
 }
 
 ################ main Script start ###################
@@ -141,6 +174,9 @@ if(!(Test-Path($logCSV))){
     downloadscriptlabel
     downloadscriptDLP
     downloadscriptRetention
+    downloadscriptadaptivescope
+    downloadinsiderrisks
+
     exitScript
 }
 

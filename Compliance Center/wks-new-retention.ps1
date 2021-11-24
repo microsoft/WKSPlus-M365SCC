@@ -345,7 +345,7 @@ if ($nextPhase -eq 9){
 }
 
 if ($nextPhase -ge 10){
-    $nextScript = $LogPath + "./wks-new-dlp.ps1"
+    $nextScript = $LogPath + "./wks-new-Adaptive-scope.ps1"
     logwrite 11 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript

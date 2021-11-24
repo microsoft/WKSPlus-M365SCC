@@ -204,7 +204,7 @@ createadaptivescope
 
 
 if ($nextPhase -ge 5){
-    $nextScript = $LogPath + "./wks-new-retention.ps1"
+    $nextScript = $LogPath + "./wks-new-DLP.ps1"
     logwrite 5 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript
