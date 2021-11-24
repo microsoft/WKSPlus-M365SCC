@@ -11,13 +11,13 @@ $global:nextPhase = 1
 $global:recovery = $false
 
 #label
-$labelDisplayName = "WKS Highly Confidential"
-$labelName = "WKS-Highly-Confidential"
+$labelDisplayName = "WKS Highly Confidential-01"
+$labelName = "WKS-Highly-Confidential-01"
 $labelTooltip = "Contains Highly confidential info"
 $labelComment = "Documents with this label contain sensitive data."
 
 #label policy
-$labelPolicyName = "WKS-Highly-confidential-publish"
+$labelPolicyName = "WKS-Highly-confidential-publish-01"
 
 ###DEBUG###
 $oldDebugPreference = $DebugPreference
