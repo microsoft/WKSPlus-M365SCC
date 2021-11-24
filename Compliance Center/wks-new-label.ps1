@@ -3,10 +3,10 @@
 )
 
 ################ Define Variables ###################
-#$LogPath = "c:\temp\"
-#$LogCSV = "C:\temp\labellog.csv"
-$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
-$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Label_Log.csv"
+$LogPath = "c:\temp\"
+$LogCSV = "C:\temp\labellog.csv"
+#$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+#$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_Label_Log.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
@@ -225,7 +225,7 @@ createPolicy
 }
 
 if ($nextPhase -ge 6){
-    $nextScript = $LogPath + "wks-new-retention.ps1"
+    $nextScript = $LogPath + ".\wks-new-retention.ps1"
     logwrite 6 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript
