@@ -1,21 +1,17 @@
-   <#
-   .SYNOPSIS
-   Short description
-   
-   .DESCRIPTION
-   Long description
-   
-   .EXAMPLE
-   An example
-   
-   .NOTES
-   General notes
-   #>
+Param (
+    [switch]$debug
+)
 
+################ Define Variables ###################
+#$LogPath = "c:\temp\"
+#$LogCSV = "C:\temp\HRConnlog.csv"
+$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\HRConnlog.csv"
+$global:nextPhase = 1
+$global:recovery = $false
 
 Function ConnectToAzureAD
     {
-        Import-Module AzureAD
         Connect-AzureAD -InformationAction SilentlyContinue | Out-Null
     }
 
@@ -57,7 +53,7 @@ Function GenerateTheCSV
         write-host "##                                                              ##" -ForegroundColor Green
         write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
         write-host "##                                                              ##" -ForegroundColor Green
-        write-host "##   The CSV file was created on $CurrentPath\HRConnector.csv" -ForegroundColor Green
+        write-host "##   The CSV file was created on $CurrentPath\wks-new-HRConnector.csv" -ForegroundColor Green
         write-host "##                                                              ##" -ForegroundColor Green
         write-host "##################################################################" -ForegroundColor Green
         write-host
@@ -65,7 +61,7 @@ Function GenerateTheCSV
         Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
         write-host
 
-        $global:HRConnectorCSVFile = ".\HRConnector.csv"
+        $global:HRConnectorCSVFile = "$($LogPath)wks-new-HRConnector.csv"
         "HRScenarios,EmailAddress,ResignationDate,LastWorkingDate,EffectiveDate,YearsOnLevel,OldLevel,NewLevel,PerformanceRemarks,PerformanceRating,ImprovementRemarks,ImprovementRating" | out-file $HRConnectorCSVFile -Encoding utf8
         $Users = Get-AzureADuser | where-object {$null -ne $_.AssignedLicenses} | Select-Object UserPrincipalName
 
@@ -128,14 +124,13 @@ Function RunTheConnector
         write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
         write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
         write-host "##   JobId     : $ConnectorJobID           ##" -ForegroundColor Green
-        write-host "##   CSV File  : $global:HRConnectorCSVFile           ##" -ForegroundColor Green
+        write-host "##   CSV File  : $global:HRConnectorCSVFile           " -ForegroundColor Green
         write-host "##                                                              ##" -ForegroundColor Green
         write-host "##################################################################" -ForegroundColor Green
         Write-Host
 
-        C:\temp\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
-
-        Read-Host "Press ENTER to continue"
+        Set-Location -Path "$env:UserProfile\Desktop\SCLabFiles\Scripts"
+        .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
     }
 
 #Script starts here
@@ -161,15 +156,15 @@ if ($answer -eq "y")
         Write-Host
         CreateAzureapp #Call the function
         Write-Host
-        Read-Host "Press ENTER to continue"
+        $answ = Read-Host "Press ENTER to continue"
         Write-Host
         GenerateTheCSV #call the function
         Write-Host
-        Read-Host "Press ENTER to continue"
+        $answ = Read-Host "Press ENTER to continue"
         Write-Host
         RunTheConnector #call the function
         Write-Host
-        Read-Host "Press ENTER to continue"
+        $answ = Read-Host "Press ENTER to continue"
         Write-Host
     }
 
