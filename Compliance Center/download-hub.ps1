@@ -283,6 +283,23 @@ function downloadscriptRetention
     Write-Debug "nextPhase set to $global:nextPhase"
 }
 
+function downloadscriptRetention
+{
+
+    try{
+        Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-undo.ps1 -OutFile c:\temp\wks-new-undo.ps1 -ErrorAction Stop"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-undo.ps1 -ErrorAction Stop
+    }
+    catch {
+        write-Debug $error[0].Exception
+        logWrite 11 $false "Unable to download the Script! Exiting."
+        exitScript
+    }
+    logWrite 11 $True "The Script has been downloaded ."
+    $global:nextPhase++
+    Write-Debug "nextPhase set to $global:nextPhase"
+}
+
 function exitScript
 {
     # Get-PSSession | Remove-PSSession
@@ -373,4 +390,28 @@ if ($nextPhase -ge 11){
     } else {
         .$nextScript
     }
+}
+
+if ($nextPhase -ge 12){
+        write-debug "Phase $nextPhase"
+        $nextScript = $LogPath + "wks-new-DLP.ps1"
+        logWrite 11 $true "Launching $nextScript"
+        if ($debug){
+            Stop-Transcript
+            .$nextScript -$debug
+        } else {
+            .$nextScript
+        }
+    }   
+
+if ($nextPhase -ge 13){
+            write-debug "Phase $nextPhase"
+            $nextScript = $LogPath + "wks-new-retention.ps1"
+            logWrite 11 $true "Launching $nextScript"
+            if ($debug){
+                Stop-Transcript
+                .$nextScript -$debug
+            } else {
+                .$nextScript
+            }
 }
