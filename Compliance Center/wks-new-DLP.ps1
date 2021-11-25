@@ -1,8 +1,8 @@
 ################ Define Variables ###################
-#$LogPath = "c:\temp\"
-#$LogCSV = "C:\temp\DLPLog.csv"
-$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
-$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_DLP_Log.csv"
+$LogPath = "c:\temp\"
+$LogCSV = "C:\temp\DLPLog.csv"
+#$LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
+#$LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\Progress_DLP_Log.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
@@ -83,61 +83,94 @@ function Getdomain
 
 function createDLPpolicy
 {
-
-    try{
-        if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
-            {write-host " The DLP Compliance Policy already Exists "}
-
-        else{
-            $params = @{
-                "Name" = "WKS Compliance Policy";
-                "ExchangeLocation" ="All";
-                "OneDriveLocation" = "All";
-                "SharePointLocation" = "All";
-                "EndpointDlpLocation" = "all";
-                "Teamslocation" = "All";
-                "Mode" = "Enable"
+    if ($SkipDLP -eq $false)
+        {        
+            try
+                {
+                    if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
+                        {
+                            write-host " The DLP Compliance Policy already Exists "
+                        }
+                    else
+                        {
+                            $params = @{
+                                "Name" = "WKS Compliance Policy";
+                                "Comment" = "Helps detect the presence of information commonly considered to be financial information in United States, including information like credit card, account information, and debit card numbers."
+                                "ExchangeLocation" ="All";
+                                "OneDriveLocation" = "All";
+                                "SharePointLocation" = "All";
+                                "EndpointDlpLocation" = "all";
+                                "Teamslocation" = "All";
+                                "Mode" = "Enable"
+                                }
+                            New-dlpcompliancepolicy @params
+                        }
                 }
-                new-dlpcompliancepolicy @params
+                catch 
+                    {
+                        write-Debug $Error[0].Exception
+                        logWrite 2 $false "Unable to create DLP Policy."
+                        exitScript
+                    }
+            if($global:recovery -eq $false)
+                {
+                    logWrite 2 $True "Able to Create DLP Policy."
+                    $global:nextPhase++
+                    Write-Debug "nextPhase set to $global:nextPhase" 
+                }
+        }
+        else 
+            {
+                logWrite 2 $True "Skipped DLP."
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"       
             }
-    }
-
-    catch {
-        logWrite 2 $false "unable to create DLP Policy."
-        exit
-    }
-    logWrite 2 $True "Able to Create DLP Policy."
-    $global:nextPhase++
 }
-
 
     ###### Create DLP Compliance Rule ############
-function createDLPComplianceRule
+function createDLPComplianceRuleLow
 {
-    try{
-       $senstiveinfo = @(@{Name =”Credit Card Number”; minCount = “1”},@{Name =”International Banking Account Number (IBAN)”; minCount = “1”},@{Name =”U.S. Bank Account Number”; minCount = “1”})
-
-        $Rulevalue = @{
-            "Name" = "WKS-Copmpliance-Ruleset";
-            "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver’s license and passport number.";
-            "Policy" = "WKS Compliance Policy";
-            "ContentContainsSensitiveInformation"=$senstiveinfo;
-            "AccessScope"= "NotInOrganization";
-            "Disabled" =$false;
-            'ReportSeverityLevel'='High'
-            }
-            New-DlpComplianceRule @rulevalue 
-        
-    }
-
-    catch {
-        logWrite 3 $false "unable to create DLP Rule."
-        exit
-    }
-    logWrite 3 $True "Able to Create DLP Rule."
-    $global:nextPhase++
+    if ($SkipDLP -eq $false)
+        {
+            try
+                {
+                    $senstiveinfo = @(@{Name ="Credit Card Number"; minCount = "1"},@{Name ="International Banking Account Number (IBAN)"; minCount = "1"},@{Name ="U.S. Bank Account Number"; minCount = "1"})
+                    $Rulevalue = @{
+                    "Name" = "WKS-Copmpliance-Rule-set";
+                    "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver's license and passport number.";
+                    "Policy" = "WKS Compliance DLP Policy 01";
+                    "ContentContainsSensitiveInformation"=$senstiveinfo;
+                    "AccessScope"= "NotInOrganization";
+                    "Disabled" =$false;
+                    "ReportSeverityLevel"="High";
+                    "GenerateIncidentReport" = "SiteAdmin";
+                    "IncidentReportContent" = "DocumentLastModifier", "Detections", "Severity", "DetectionDetails", "OriginalContent";
+                    "NotifyUser" = "LastModifier","owner";
+                    "BlockAccess" = $true;
+                    "BlockAccessScope" = "All";
+                        }
+                    New-DlpComplianceRule @rulevalue 
+                }
+                catch 
+                    {
+                        write-Debug $Error[0].Exception
+                        logWrite 3 $false "Unable to create DLP Rule."
+                        exitScript
+                    }
+            if($global:recovery -eq $false)
+                {
+                    logWrite 3 $True "Able to Create DLP Rule."
+                    
+                    Write-Debug "nextPhase set to $global:nextPhase" 
+                }
+        }
+        else 
+            {
+                logWrite 4 $True "Skipped DLP."
+               
+                Write-Debug "nextPhase set to $global:nextPhase"   
+            }    
 }
-
 function exitScript
 {
    logWrite 4 $true "Session removed successfully."

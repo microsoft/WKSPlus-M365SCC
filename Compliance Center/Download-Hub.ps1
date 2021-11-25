@@ -116,7 +116,7 @@ function downloadscriptRetention
 {
 
     try{
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1" -OutFile "c:\temp\wks-new-retention.ps1"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1
     }
     catch {
         logWrite 3 $false "Unable to download the Script! Exiting."
@@ -130,7 +130,7 @@ function downloadscriptadaptivescope
 {
 
     try{
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-Adaptive-scope.ps1" -OutFile "c:\temp\wks-new-Adaptive-scope.ps1"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-Adaptive-scope.ps1 -OutFile c:\temp\wks-new-Adaptive-scope.ps1
     }
     catch {
         logWrite 4 $false "Unable to download the Script! Exiting."
@@ -144,7 +144,7 @@ Function downloadinsiderrisks
 {
 
     try{
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/InsiderRisks.ps1" -OutFile "c:\temp\InsiderRisks.ps1"
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/InsiderRisks.ps1 -OutFile c:\temp\InsiderRisks.ps1
     }
     catch {
         logWrite 5 $false "Unable to download the Script! Exiting."
