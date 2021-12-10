@@ -185,7 +185,7 @@ if(!(Test-Path($logCSV))){
     recovery
     getdomain
     createDLPpolicy
-    createDLPComplianceRule
+    createDLPComplianceRuleLow
     
 }
 
@@ -200,7 +200,7 @@ if($nextPhase -eq 1){
     }
     
     if ($nextPhase -eq 3){
-    createDLPComplianceRule
+    createDLPComplianceRuleLow
     }
    
     if ($nextPhase -eq 4){
