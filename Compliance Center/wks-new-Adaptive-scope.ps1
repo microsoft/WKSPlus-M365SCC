@@ -81,14 +81,6 @@ function recovery
     }
 }
 
-function goToSleep ([int]$seconds){
-    for ($i = 1; $i -le $seconds; $i++ )
-    {
-        $p = ([Math]::Round($i/$seconds, 2) * 100)
-        Write-Progress -Activity "Allowing time for label to be created on backend..." -Status "$p% Complete:" -PercentComplete $p
-        Start-Sleep -Seconds 1
-    }
-}
 
 function checkModule 
 {
