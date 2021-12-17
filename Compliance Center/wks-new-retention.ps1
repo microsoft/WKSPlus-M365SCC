@@ -16,9 +16,9 @@ $siteResourceQuota = 1024
 $siteTemplate = "STS#3"
 ################ Tag Variables ###################
 $retentionTagName = "WKS-Compliance-Tag"
-$retentionTagComment = "Keep and delete tag - 3 Days"
+$retentionTagComment = "Keep and delete tag - 2 Days"
 $retentionTagAction = "KeepAndDelete"
-$retentionTagDuration = 3
+$retentionTagDuration = 2
 $retentionTagType = "ModificationAgeInDays"
 $isRecordLabel = $false
 ################ Policy Variables ###################
