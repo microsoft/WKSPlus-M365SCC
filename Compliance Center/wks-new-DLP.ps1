@@ -62,9 +62,6 @@ function recovery
     }
 }
 
-
-
-
 function Getdomain
 {
     try
@@ -115,12 +112,6 @@ function createDLPpolicy
                         logWrite 2 $false "Unable to create DLP Policy."
                         exitScript
                     }
-            if($global:recovery -eq $false)
-                {
-                    logWrite 2 $True "Able to Create DLP Policy."
-                    $global:nextPhase++
-                    Write-Debug "nextPhase set to $global:nextPhase" 
-                }
         }
 }
 
@@ -154,12 +145,7 @@ function createDLPComplianceRuleLow
                         logWrite 3 $false "Unable to create DLP Rule."
                         exitScript
                     }
-            if($global:recovery -eq $false)
-                {
-                    logWrite 3 $True "Able to Create DLP Rule."
-                    
-                    Write-Debug "nextPhase set to $global:nextPhase" 
-                }
+    
         }
    }
 function exitScript
