@@ -344,9 +344,9 @@ if ($nextPhase -eq 9){
     NewRetentionPolicy $retentionPolicyName $tenantName $siteName $retentionTagName
 }
 
-if ($nextPhase -ge 10){
+if ($nextPhase -ge 9){
     $nextScript = $LogPath + "./wks-new-Adaptive-scope.ps1"
-    logwrite 11 $true "Launching $nextScript"
+    logwrite 9 $true "Launching $nextScript"
     if ($debug){
         Stop-Transcript
         .$nextScript -$debug

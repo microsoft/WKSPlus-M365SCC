@@ -202,5 +202,5 @@ if($nextPhase -eq 5){
 }
 
 if ($nextPhase -ge 5){
-    ./wks-new-dlp.ps1
+    ./wks-new-label.ps1
 }
