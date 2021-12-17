@@ -193,6 +193,14 @@ if($nextPhase -eq 3){
     downloadscriptRetention
 }
 
-if ($nextPhase -ge 4){
-    ./wks-new-label.ps1
+if($nextphase -eq 4){
+    downloadscriptadaptivescope
+}
+
+if($nextPhase -eq 5){
+    downloadinsiderrisks
+}
+
+if ($nextPhase -ge 5){
+    ./wks-new-dlp.ps1
 }

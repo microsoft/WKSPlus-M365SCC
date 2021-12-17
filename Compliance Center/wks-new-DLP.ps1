@@ -1,3 +1,7 @@
+Param (
+    [switch]$debug
+)
+
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
 $LogCSV = "C:\temp\DLPLog.csv"
@@ -94,12 +98,11 @@ function createDLPpolicy
                     else
                         {
                             $params = @{
-                                "Name" = "WKS Compliance Policy";
+                                "Name" = "WKS Compliance DLP Policy";
                                 "Comment" = "Helps detect the presence of information commonly considered to be financial information in United States, including information like credit card, account information, and debit card numbers."
                                 "ExchangeLocation" ="All";
                                 "OneDriveLocation" = "All";
                                 "SharePointLocation" = "All";
-                                "EndpointDlpLocation" = "all";
                                 "Teamslocation" = "All";
                                 "Mode" = "Enable"
                                 }
@@ -119,12 +122,6 @@ function createDLPpolicy
                     Write-Debug "nextPhase set to $global:nextPhase" 
                 }
         }
-        else 
-            {
-                logWrite 2 $True "Skipped DLP."
-                $global:nextPhase++
-                Write-Debug "nextPhase set to $global:nextPhase"       
-            }
 }
 
     ###### Create DLP Compliance Rule ############
@@ -138,7 +135,7 @@ function createDLPComplianceRuleLow
                     $Rulevalue = @{
                     "Name" = "WKS-Copmpliance-Rule-set";
                     "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver's license and passport number.";
-                    "Policy" = "WKS Compliance DLP Policy 01";
+                    "Policy" = "WKS Compliance DLP Policy";
                     "ContentContainsSensitiveInformation"=$senstiveinfo;
                     "AccessScope"= "NotInOrganization";
                     "Disabled" =$false;
@@ -164,13 +161,7 @@ function createDLPComplianceRuleLow
                     Write-Debug "nextPhase set to $global:nextPhase" 
                 }
         }
-        else 
-            {
-                logWrite 4 $True "Skipped DLP."
-               
-                Write-Debug "nextPhase set to $global:nextPhase"   
-            }    
-}
+   }
 function exitScript
 {
    logWrite 4 $true "Session removed successfully."
