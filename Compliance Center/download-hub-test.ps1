@@ -4,7 +4,7 @@ Param (
 
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\download.csv"
+$LogCSV = "C:\temp\download-test.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
@@ -95,7 +95,7 @@ function ConnectAzureAD
             }
     if($global:recovery -eq $false)
         {
-            logWrite 1 $true "Successfully connected to Microsoft Online"
+            logWrite 1 $true "Successfully connected to Microsoft Azure AD"
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         } 
@@ -371,6 +371,7 @@ function downloadscripts
             #InsiderRisk scripts
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile $($LogPath)wks-new-HRConnector.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile "$($LogPath)wks-new-HRConnector.ps1" -ErrorAction Stop
+
             Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile $($LogPath)upload_termination_records.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile "$($LogPath)upload_termination_records.ps1" -ErrorAction Stop
         } 
@@ -471,5 +472,5 @@ if($nextPhase -eq 8)
     }
     
 if ($nextPhase -ge 8){
-        ./wks-new-dlp.ps1
+        ./wks-new-label.ps1
     }
