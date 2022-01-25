@@ -149,9 +149,20 @@ function createLabel
     $domainName = (Get-AcceptedDomain | ?{$_.Default -eq $true}).DomainName
     $Encpermission = $domainname + ":VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL"
     try {
-        $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
-    } catch {
-        logWrite 4 $false "Error creating label"
+            if (Get-label -Identity $labelName)
+        {
+            write-host " The $labelName already Exists " 
+      
+            logWrite 4 $true "The $labelName already Exists"
+            $global:nextPhase++
+        }
+
+            else{
+                    $labelStatus = New-Label -DisplayName $labelDisplayName -Name $labelName -ToolTip $labelTooltip -Comment $labelComment -ContentType "file","Email","Site","UnifiedGroup" -EncryptionEnabled:$true -SiteAndGroupProtectionEnabled:$true -EncryptionPromptUser:$true -EncryptionRightsDefinitions $Encpermission -SiteAndGroupProtectionPrivacy "private" -EncryptionDoNotForward:$true -SiteAndGroupProtectionAllowLimitedAccess:$true -ErrorAction stop | Out-Null
+                } 
+        }
+    catch {
+        logWrite 4 $true "Error creating label"
         exitScript
     }
     logWrite 4 $true "Successfully created label"
@@ -170,9 +181,24 @@ function createPolicy
     - Need to make sure the labele exists
     #>
 
-    try {
+    try
+    {
+
+        if(get-labelpolicy -identity $labelpolicyname)
+            {
+                write-host " The $labelpolicyname already Exists " 
+      
+                logWrite 5 $true "The $labelpolicyname already Exists"
+                $global:nextPhase++
+            } 
+
+        else
+        {
         New-LabelPolicy -name $labelPolicyName -Settings @{mandatory=$false} -AdvancedSettings @{requiredowngradejustification= $true} -Labels $labelName -ErrorAction stop | Out-Null
-    } catch {
+        }
+    }
+    
+    catch {
         logWrite 5 $false "Error creating label policy ($error)"
         exitScript
     }

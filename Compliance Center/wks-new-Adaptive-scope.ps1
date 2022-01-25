@@ -142,9 +142,22 @@ function createadaptivescope
     Need to check to see if label exists in case the failure occured after cmd was successful, such as if they close the PS window. Maybe just check if label exists, and use Set-Label if so.
     #>
     try {
+
+        if ( Get-AdaptiveScope -identity $AdaptiveName )
+        {
+            write-host " The $AdaptiveName Policy already Exists " 
+      
+            logWrite 4 $true "$AdaptiveName Policy already exists"
+            $nextScript
+        }
+
+        else
+        {
         $adaptivescopeStatus = New-AdaptiveScope -Name $AdaptiveName -Comment $comment -LocationType $locationtype -FilterConditions $filterconditions -ErrorAction stop | Out-Null
-    } catch {
-        logWrite 4 $false "Error unable to create Adaptive scope"
+        }
+    } 
+        catch {
+        logWrite 4 $true "Error unable to create Adaptive scope"
         exitScript
     }
     logWrite 4 $true "Successfully created an Adaptive Scope Policy"

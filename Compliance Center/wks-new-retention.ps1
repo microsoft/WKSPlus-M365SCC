@@ -193,7 +193,7 @@ function connectspo([string]$tenantName)
 
 function connectpnp([string]$tenantName)
 {
-    $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
+    $connectionURL = "https://$tenantName.sharepoint.com"
     Try
     {
         Connect-PnpOnline -Url $connectionURL -useWebLogin
@@ -214,23 +214,49 @@ function createSPOSite([string]$tenantName, [string]$siteName, [string]$siteOwne
 {
     $url = "https://$tenantName.sharepoint.com/sites/$siteName"
     Try{
-        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
-        } catch {
-            logWrite 7 $false "Unable to create the SharePoint site $siteName."
-            exitScript
-        }
-        logWrite 7 $True "$siteName site created successfully."
-        $global:nextPhase++
-}
 
+        if (Get-sposite -Identity $url)
+        {
+            write-host " The $sitename already Exists " 
+      
+            logWrite 7 $true "The $sitename already Exists"
+            $global:nextPhase++
+        }
+
+        else
+            {            
+        $spoSiteCreationStatus = New-spoSite -Url $url -title $siteName -Owner $siteOwner -StorageQuota $siteStorageQuota -ResourceQuota $siteResourceQuota -Template $siteTemplate -ErrorAction Stop | Out-Null
+            }
+    } 
+        
+        catch{
+            logWrite 7 $True "Unable to create the SharePoint site $siteName."
+            exitScript
+            }
+            logWrite 7 $True "$siteName site created successfully."
+            $global:nextPhase++
+
+}
 # -------------------
 # Create Compliance Tag
 # -------------------
 Function CreateComplianceTag([string]$retentionTagName, [string]$retentionTagComment, [bool]$isRecordLabel, [string]$retentionTagAction, [int]$retentionTagDuration, [string]$retentionTagType)
 {
     try {
+        if (get-compliancetag -identity $retentionTagName)
+        {
+            write-host " The $retentionTagName already Exists " 
+      
+            logWrite 8 $true "The $retentionTagName already Exists"
+            $global:nextPhase++
+        }
+
+        else
+        {
         $complianceTagStatus = new-ComplianceTag -Name $retentionTagName -Comment $retentionTagComment -IsRecordLabel $isRecordLabel -RetentionAction $retentionTagAction -RetentionDuration $retentionTagDuration -RetentionType $retentionTagType | Out-Null
-        } catch {
+        } 
+    }
+        catch {
         write-Debug $Error[0].Exception
         logWrite 8 $false "Unable to create Retention Tag $retentionTagName"
         exitScript
