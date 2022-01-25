@@ -10,8 +10,10 @@ $LogCSV = "C:\temp\DLPLog.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
-################ Functions ###################
+################ global ###################
 
+$policyname = "WKS Compliance Policy-01"
+$rulesetname = "WKS-Copmpliance-Rule-set"
 
 ################ Functions ###################
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
@@ -62,24 +64,6 @@ function recovery
     }
 }
 
-function Getdomain
-{
-    try
-    {
-        [Array]$DomainName = Get-AcceptedDomain
-
-        $SuffixDomain = $DomainName[0].DomainName
-        $Email = "Admin@$SuffixDomain"
-    }
-    catch {
-        logWrite 1 $false "unable to fetch all accepted Domains."
-        exit
-    }
-    logWrite 1 $True "Able to get all accepted Domains."
-    $global:nextPhase++
-    
-}
-
 #### check for existing DLP Policy. ####
 
 function createDLPpolicy
@@ -88,14 +72,14 @@ function createDLPpolicy
         {        
             try
                 {
-                    if (Get-DlpCompliancePolicy -Identity "WKS Compliance Policy")
+                    if (Get-DlpCompliancePolicy -Identity $policyname)
                         {
                             write-host " The DLP Compliance Policy already Exists "
                         }
                     else
                         {
                             $params = @{
-                                "Name" = "WKS Compliance DLP Policy";
+                                "Name" = $policyname;
                                 "Comment" = "Helps detect the presence of information commonly considered to be financial information in United States, including information like credit card, account information, and debit card numbers."
                                 "ExchangeLocation" ="All";
                                 "OneDriveLocation" = "All";
@@ -103,13 +87,13 @@ function createDLPpolicy
                                 "Teamslocation" = "All";
                                 "Mode" = "Enable"
                                 }
-                            New-dlpcompliancepolicy @params
-                        }
+                            }
+                        New-dlpcompliancepolicy @params
                 }
                 catch 
                     {
                         write-Debug $Error[0].Exception
-                        logWrite 2 $false "Unable to create DLP Policy."
+                        logWrite 1 $false "Unable to create DLP Policy."
                         exitScript
                     }
         }
@@ -124,9 +108,9 @@ function createDLPComplianceRuleLow
                 {
                     $senstiveinfo = @(@{Name ="Credit Card Number"; minCount = "1"},@{Name ="International Banking Account Number (IBAN)"; minCount = "1"},@{Name ="U.S. Bank Account Number"; minCount = "1"})
                     $Rulevalue = @{
-                    "Name" = "WKS-Copmpliance-Rule-set";
+                    "Name" = $rulesetname;
                     "Comment" = "Helps detect the presence of information commonly considered to be subject to the GLBA act in America. like driver's license and passport number.";
-                    "Policy" = "WKS Compliance DLP Policy";
+                    "Policy" = "WKS Compliance DLP Policy-01";
                     "ContentContainsSensitiveInformation"=$senstiveinfo;
                     "AccessScope"= "NotInOrganization";
                     "Disabled" =$false;
@@ -142,7 +126,7 @@ function createDLPComplianceRuleLow
                 catch 
                     {
                         write-Debug $Error[0].Exception
-                        logWrite 3 $false "Unable to create DLP Rule."
+                        logWrite 2 $false "Unable to create DLP Rule."
                         exitScript
                     }
     
@@ -150,7 +134,7 @@ function createDLPComplianceRuleLow
    }
 function exitScript
 {
-   logWrite 4 $true "Session removed successfully."
+   logWrite 3 $true "Session removed successfully."
 }
 ################ main Script start ###################
 
@@ -160,26 +144,21 @@ if(!(Test-Path($logCSV))){
 } else {
     # if log already exists, check if we need to recover#
     recovery
-    getdomain
     createDLPpolicy
     createDLPComplianceRuleLow
     
 }
 
 #use variable to control phases
-
+  
 if($nextPhase -eq 1){
-    getdomain
-    }
-    
-    if($nextPhase -eq 2){
     createDLPpolicy
     }
     
-    if ($nextPhase -eq 3){
+if ($nextPhase -eq 2){
     createDLPComplianceRuleLow
     }
    
-    if ($nextPhase -eq 4){
+    if ($nextPhase -eq 3){
     exitScript
     }
