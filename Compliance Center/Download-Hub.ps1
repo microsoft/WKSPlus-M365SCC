@@ -4,7 +4,7 @@ Param (
 
 ################ Define Variables ###################
 $LogPath = "c:\temp\"
-$LogCSV = "C:\temp\download.csv"
+$LogCSV = "C:\temp\download-test.csv"
 $global:nextPhase = 1
 $global:recovery = $false
 
@@ -57,150 +57,420 @@ function recovery
     }
 }
 
-function checkModule
+# -----------------------------------------------------------
+# Connect to AzureAD (Step 1)
+# -----------------------------------------------------------
+function ConnectAzureAD
 {
-    try {
-        Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null
-    
+    try 
+        {
+            Write-Debug "Get-AzureADDirectoryRole -ErrorAction stop"
+            $testConnection = Get-AzureADDirectoryRole -ErrorAction stop | Out-Null #if true (Already Connected)
+        }
+        catch
+            {
+                try
+                    {
+                        write-Debug $error[0].Exception
+                        Write-Host "Connecting to Azure AD..."
+                        Connect-AzureAD -ErrorAction stop | Out-Null
+                    }
+                    catch    
+                        {
+                            try
+                                {
+                                    write-Debug $error[0].Exception
+                                    Write-Host "Installing Azure AD PowerShell Module..."
+                                    Install-Module AzureAD -Force -AllowClobber
+                                    Connect-AzureAD -ErrorAction stop | Out-Null
+                                }
+                                catch
+                                    {
+                                        write-Debug $error[0].Exception
+                                        logWrite 1 $false "Couldn't connect to Azure AD. Exiting."
+                                        exitScript
+                                    }
+                       
+                        }
+            }
+    if($global:recovery -eq $false)
+        {
+            logWrite 1 $true "Successfully connected to Microsoft Azure AD"
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        } 
+}
 
-    if (Get-Command Connect-ExchangeOnline -ErrorAction Stop | Out-Null) {
-     write-host "Exchange online Management module is not installed" 
-    }
-
-    else {
-        install-module -name ExchangeOnlineManagement
-    }
+# -----------------------------------------------------------
+# Connect to Microsoft Online (Step 2)
+# -----------------------------------------------------------
+function ConnectMsol
+{
+    try 
     {
-        logWrite 1 $false "ExchangeOnlineManagement module is not installed! Exiting." 
-      }
+        Write-Debug "Get-MSOLCompanyInformation -ErrorAction stop"
+        $testConnection = Get-MSOLCompanyInformation -ErrorAction stop | Out-Null #if true (Already Connected)
     }
-             catch {
-            logWrite 1 $true "ExchangeOnlineManagement module is now installed! Exiting." -foregroundcolor green
-    }
-    logWrite 1 $True "ExchangeOnlineManagement module is installed."
-    $global:nextPhase++
+    catch
+        {
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Microsoft Online..."
+                    Connect-MSOLService -ErrorAction stop | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Microsoft Online PowerShell Module..."
+                                Install-Module MSOnline -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-MSOLService -ErrorAction stop | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 2 $false "Couldn't connect to Microsoft Online. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 2 $true "Successfully connected to Microsoft Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
 
-
-
-function downloadscriptlabel
+# -----------------------------------------------------------
+# Connect to Exchange Online (Step 3)
+# -----------------------------------------------------------
+function ConnectEXO
 {
-
-Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile c:\temp\wks-new-label.ps1
+    try 
+    {
+        Write-Debug "Get-OrganizationConfig -ErrorAction stop"
+        $testConnection = Get-OrganizationConfig -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
+        {
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Exchange Online..."
+                    Connect-ExchangeOnline -ShowBanner:$false -ErrorAction stop | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Exchange Online PowerShell Module..."
+                                Install-Module ExchangeOnlineManagement -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-ExchangeOnline -ShowBanner:$false -ErrorAction stop | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 3 $false "Couldn't connect to Exchange Online. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 3 $true "Successfully connected to Exchange Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
-catch {
-    logWrite 1 $false "Unable to download the Script! Exiting."
-    exit
-}
-logWrite 1 $True "The Script has been downloaded ."
-$global:nextPhase++
-}
 
-
-function downloadscriptDLP
+# -----------------------------------------------------------
+# Connect to Compliance Center (Step 4)
+# -----------------------------------------------------------
+function ConnectSCC
 {
+    try 
+    {
+        Write-Debug "Get-Label -ErrorAction stop"
+        $testConnection = Get-Label -ErrorAction stop | Out-Null #if true (Already Connected)
+    }
+    catch
+        {
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to Compliance Center..."
+                    Connect-IPPSSession -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing Compliance Center PowerShell Module..."
+                                #Install-Module ExchangeOnlineManagement -Force -AllowClobber #Not required, but it was already installed on the previous step
+                                Connect-IPPSSession -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 4 $false "Couldn't connect to Compliance Center. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 4 $true "Successfully connected to Compliance Center"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
+}
 
-Try{
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile c:\temp\wks-new-DLP.ps1
-}
-catch {
-    logWrite 2 $false "Unable to download the Script! Exiting."
-    exit
-}
-logWrite 2 $True "The Script has been downloaded ."
-$global:nextPhase++
-}
 
-function downloadscriptRetention
+# -------------------------------------------------------
+# Get Tenant Name (Step 5)
+# Funcion required for SharePoint and PNP connections
+# -------------------------------------------------------
+Function getdomain
 {
-
-    try{
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile c:\temp\wks-new-retention.ps1
-    }
-    catch {
-        logWrite 3 $false "Unable to download the Script! Exiting."
-        exit
-    }
-    logWrite 3 $True "The Script has been downloaded ."
-    $global:nextPhase++
+    try
+        {
+            Write-Debug "$InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}"
+            $InitialDomain = Get-MsolDomain -ErrorAction stop | Where-Object {$_.IsInitial -eq $true}
+        }
+        catch
+            {
+                write-Debug $error[0].Exception
+                logWrite 5 $false "Unable to fetch Tenant name."
+                exitScript
+            }
+    Write-Debug "Initial domain: $InitialDomain"
+    if($global:recovery -eq $false)
+        {
+            logWrite 5 $True "Successfully got Tenant Name."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
+    return $InitialDomain.name.split(".")[0]
 }
 
-function downloadscriptadaptivescope
+# -------------------------------------------------------
+# Connect to SharePoint Online (Step 6)
+# -------------------------------------------------------
+function ConnectSPO([string]$tenantName)
 {
-
-    try{
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-Adaptive-scope.ps1 -OutFile c:\temp\wks-new-Adaptive-scope.ps1
+    $AdminURL = "https://$tenantName-admin.sharepoint.com"
+    try 
+    {
+        Write-Debug "Get-SPOTenant -ErrorAction stop"
+        $testConnection = Get-SPOTenant -ErrorAction stop | Out-Null #if true (Already Connected)
     }
-    catch {
-        logWrite 4 $false "Unable to download the Script! Exiting."
-        exit
-    }
-    logWrite 4 $True "The Script has been downloaded ."
-    $global:nextPhase++
+    catch
+        {
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to SharePoint Online..."
+                    Connect-SPOService -Url $AdminURL -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing SharePoint Online PowerShell Module..."
+                                Install-Module Microsoft.Online.SharePoint.PowerShell -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-SPOService -Url $AdminURL -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 6 $false "Couldn't connect to SharePoint Online. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 6 $true "Successfully connected to SharePoint Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
 
-Function downloadinsiderrisks
+# -------------------------------------------------------
+# Connect to PNP Online (Step 7)
+# -------------------------------------------------------
+function ConnectPNP([string]$tenantName)
 {
-
-    try{
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/InsiderRisks.ps1 -OutFile c:\temp\InsiderRisks.ps1
+    $connectionURL = "https://$tenantName.sharepoint.com/sites/$global:siteName"
+    try 
+    {
+        Write-Debug "Get-PNPChangeLog -ErrorAction stop"
+        $testConnection = Get-PNPChangeLog -ErrorAction stop | Out-Null #if true (Already Connected)
     }
-    catch {
-        logWrite 5 $false "Unable to download the Script! Exiting."
-        exit
-    }
-    logWrite 5 $True "The Script has been downloaded ."
-    $global:nextPhase++
+    catch
+        {
+            try
+                {
+                    write-Debug $error[0].Exception
+                    Write-Host "Connecting to PNP Online..."
+                    Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
+                }
+                catch    
+                    {
+                        try
+                            {
+                                write-Debug $error[0].Exception
+                                Write-Host "Installing PNP Online PowerShell Module..."
+                                Install-Module PNP.PowerShell -Force -AllowClobber -ErrorAction stop | Out-Null
+                                Connect-PnpOnline -Url $connectionURL -UseWebLogin -ErrorAction stop -WarningAction SilentlyContinue | Out-Null
+                            }
+                            catch
+                                {
+                                    write-Debug $error[0].Exception
+                                    logWrite 7 $false "Couldn't connect to PNP Online. Exiting."
+                                    exitScript
+                                }
+                   
+                    }
+        }
+        if($global:recovery -eq $false)
+            {
+                logWrite 7 $true "Successfully connected to PNP Online"
+                $global:nextPhase++
+                Write-Debug "nextPhase set to $global:nextPhase"
+            }
 }
 
 
-function exitScript
+function downloadscripts
 {
-    #remove psession if fails only
-    #Get-PSSession | Remove-PSSession
-    logWrite 6 $true "Session removed successfully."
+    try
+        {
+            #Labels scritp
+            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-Adaptive-scope.ps1 -OutFile $($LogPath)wks-new-Adaptive-scope.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-Adaptive-scope.ps1 -OutFile "$($LogPath)wks-new-Adaptive-scope.ps1" -ErrorAction Stop
+            #Adaptive Scopes
+            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile $($LogPath)wks-new-label.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile "$($LogPath)wks-new-label.ps1" -ErrorAction Stop
+            #DLP Script
+            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile $($LogPath)wks-new-DLP.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile "$($LogPath)wks-new-DLP.ps1" -ErrorAction Stop
+            #Retention script
+            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile $($LogPath)wks-new-retention.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile "$($LogPath)wks-new-retention.ps1" -ErrorAction Stop
+            #InsiderRisk scripts
+            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile $($LogPath)wks-new-HRConnector.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile "$($LogPath)wks-new-HRConnector.ps1" -ErrorAction Stop
+
+            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile $($LogPath)upload_termination_records.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile "$($LogPath)upload_termination_records.ps1" -ErrorAction Stop
+        } 
+        catch 
+            {
+                write-Debug $error[0].Exception
+                logWrite 8 $false "Unable to download the workshop scripts from GitHub! Exiting."
+                exitScript
+            }
+    if($global:recovery -eq $false)
+        {
+            logWrite 8 $True "Successfully downloaded the workshop scripts."
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
+} 
+
+# -----------------------------------------------------------
+# Debug mode
+# -----------------------------------------------------------
+$oldDebugPreference = $DebugPreference
+if($debug)
+{
+    write-debug "Debug Enabled"
+    $DebugPreference = "Continue"
+    Start-Transcript -Path "$($LogPath)download-debug.txt"
 }
 
-################ main Script start ###################
-cd C:\temp\
+if(!(Test-Path($logCSV)))
+    {
+        # if log doesn't exist then must be first time we run this, so go to initialization
+        Write-Debug "Entering Initialization"
+        initialization
+    } 
+        else 
+            {
+                # if log already exists, check if we need to recover
+                Write-Debug "Entering Recovery"
+                recovery
+                ConnectAzureAD
+                ConnectMSOL
+                ConnectEXO
+                ConnectSCC
+                $tenantName = GetDomain
+                Write-Debug "$tenantName Returned"
+                ConnectSPO $tenantName
+            }
 
-if(!(Test-Path($logCSV))){
-    # if log doesn't exist then must be first time we run this, so go to initialization
-    initialization
-} else {
-    # if log already exists, check if we need to recover
-    recovery
-    downloadscriptlabel
-    downloadscriptDLP
-    downloadscriptRetention
-    downloadscriptadaptivescope
-    downloadinsiderrisks
+# -------------------------------------------------------
+# use variable to control phases
+# -------------------------------------------------------
+if($nextPhase -eq 1)
+    {
+        write-debug "Phase $nextPhase"
+        ConnectAzureAD
+    }
 
-    exitScript
-}
+if($nextPhase -eq 2)
+    {
+        write-debug "Phase $nextPhase"
+        ConnectMSOL
+    }
 
-#use variable to control phases
+if($nextPhase -eq 3)
+    {
+        write-debug "Phase $nextPhase"
+        ConnectEXO
+    }
 
-if($nextPhase -eq 1){
-    downloadscriptlabel
-}
+if($nextPhase -eq 4)
+    {
+        write-debug "Phase $nextPhase"
+        ConnectSCC
+    }
 
-if($nextPhase -eq 2){
-    downloadscriptDLP
-}
-if($nextPhase -eq 3){
-    downloadscriptRetention
-}
+if($nextPhase -eq 5)
+    {
+        write-debug "Phase $nextPhase"
+        $tenantName = getdomain
+        write-debug "$tenantName Returned"
+    }
 
-if($nextphase -eq 4){
-    downloadscriptadaptivescope
-}
+if($nextPhase -eq 6)
+    {
+        write-debug "Phase $nextPhase"
+        ConnectSPO $tenantName
+    }
 
-if($nextPhase -eq 5){
-    downloadinsiderrisks
-}
+if($nextPhase -eq 7)
+    {
+        write-debug "Phase $nextPhase"
+        ConnectPNP $tenantName
+    }
 
-if ($nextPhase -ge 5){
-    ./wks-new-label.ps1
-}
+if($nextPhase -eq 8)
+    {
+        write-debug "Phase $nextPhase"
+        downloadscripts
+    }
+    
+if ($nextPhase -ge 8){
+        ./wks-new-label.ps1
+    }
