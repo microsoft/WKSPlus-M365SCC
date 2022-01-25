@@ -276,24 +276,46 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
     #try to create policy first
     Try
     {
-        #Create compliance retention Policy
+        if(get-retentioncompliancePolicy -Identity $retentionpolicyname )
+        {
+            write-host " The DLP Compliance Policy already Exists " 
+                      
+            logWrite 9 $true "DLP Policy already exists"
+            $global:nextPhase++
+        }
+        else {
+            #Create compliance retention Policy
         $policyStatus = New-RetentionCompliancePolicy -Name $retentionPolicyName -SharePointLocation $url -Enabled $true -ExchangeLocation All -ModernGroupLocation All -OneDriveLocation All -ErrorAction Stop | Out-Null
-    } catch {
+        }
+    } 
+    catch {
         #failed to create policy
         write-Debug $Error[0].Exception
         logWrite 9 $false "Unable to create the Retention Policy $retentionPolicyName"
-        exitScript
+        $global:nextPhase++
     }
     
     #then, if successfull, create rule in policy
-    try {
+    try
+{
+    if(get-retentioncompliancePolicy -Identity $retentionpolicyname )
+        {
+            write-host " The DLP Compliance Policy already Exists " 
+                      
+            logWrite 9 $true "DLP Policy already exists"
+            $nextScript
+        }
+        else {
+    
+    
         $policyRuleStatus = New-RetentionComplianceRule -Policy $retentionPolicyName -publishComplianceTag $retentionTagName -ErrorAction Stop | Out-Null
     }
+}
     catch {
          #failed to create policy
          write-Debug $Error[0].Exception
          logWrite 9 $false "Unable to create the Retention Policy Rule."
-         exitScript
+         $nextScript
     }
     
     #if successful, move on
@@ -301,7 +323,7 @@ function NewRetentionPolicy([string]$retentionPolicyName, [string]$tenantName, [
     
     #sleep for 240 seconds
     goToSleep 240
-    $global:nextPhase++
+    $nextScript
 }
 
 
