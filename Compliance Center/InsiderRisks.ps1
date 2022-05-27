@@ -22,7 +22,7 @@
     ##################################################################################################
 
 .Version
-    3.21 (May 27th 2022)
+    3.22 (May 27th 2022)
 #>
 
 Param (
@@ -60,6 +60,9 @@ function Recovery
     $lastEntry2 = (($savedLog.Count) - 2)
     Write-Debug "Entry Before Last: $lastEntry2"
     $lastEntryPhase = [int]$savedLog[$lastEntry].Phase
+    #Always need to restart from phase 5 to get the app infos.
+    $lastEntryPhase = 4
+    #Always need to restart from phase 5 to get the app infos.
     Write-Debug "Last Phase: $lastEntryPhase"
     $lastEntryResult = $savedLog[$lastEntry].Result
     Write-Debug "Last Entry Result: $lastEntryResult"
