@@ -61,7 +61,7 @@ function Recovery
     Write-Debug "Entry Before Last: $lastEntry2"
     $lastEntryPhase = [int]$savedLog[$lastEntry].Phase
     #Always need to restart from phase 5 to get the app infos.
-    $lastEntryPhase = 4
+    $lastEntryPhase = 2
     #Always need to restart from phase 5 to get the app infos.
     Write-Debug "Last Phase: $lastEntryPhase"
     $lastEntryResult = $savedLog[$lastEntry].Result
