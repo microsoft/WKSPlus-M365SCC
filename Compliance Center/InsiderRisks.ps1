@@ -1,11 +1,13 @@
 <#
- .Synopsis
-  Pré-configuration for WorkshopPLUS: Securiy and Compliance: Compliance Center
+.Synopsis
+  Pre-configuration for the following Microsoft Premier offerings:
+    1) Activate Microsoft 365 Security and Compliance: Purview Manage Insider Risks
+    2) WorkshopPLUS: Microsoft 365 Security and Compliance - Microsoft Purview
 
- .Description
-  Displays a visual representation of a calendar. This function supports multiple months
-  and lets you highlight specific date ranges or days.
+.Description
+  Prepare the required configuration for some Microsoft Premier offerings.
 
+.Description
     ##################################################################################################
     # This sample script is not supported under any Microsoft standard support program or service.   #
     # This sample script is provided AS IS without warranty of any kind.                             #
@@ -19,52 +21,18 @@
     # documentation, even if Microsoft has been advised of the possibility of such damages.          #
     ##################################################################################################
 
- .Parameter Start
-  The first month to display.
-
- .Parameter End
-  The last month to display.
-
- .Parameter FirstDayOfWeek
-  The day of the month on which the week begins.
-
- .Parameter HighlightDay
-  Specific days (numbered) to highlight. Used for date ranges like (25..31).
-  Date ranges are specified by the Windows PowerShell range syntax. These dates are
-  enclosed in square brackets.
-
- .Parameter HighlightDate
-  Specific days (named) to highlight. These dates are surrounded by asterisks.
-
- .Example
-   # Show a default display of this month.
-   Show-Calendar
-
- .Example
-   # Display a date range.
-   Show-Calendar -Start "March, 2010" -End "May, 2010"
-
- .Example
-   # Highlight a range of days.
-   Show-Calendar -HighlightDay (1..10 + 22) -HighlightDate "December 25, 2008"
+.Version
+    3.20 (May 27th 2022)
 #>
-
-##
-## New-ModuleManifest -Path .\Scripts\TestModule.psd1 -Author 'Marcelo Hunecke' -CompanyName 'Microsoft' -RootModule 'WorkshopSnC.psm1' -FunctionsToExport @('Get-RegistryKey','Set-RegistryKey') -Description 'This is a Workshop Security and Compliance module.'
-##
 
 Param (
     [CmdletBinding()]
-    [switch]$debug,
-    [switch]$SkipSensitivityLabels,
-    [switch]$SkipRetentionPolicies,
-    [switch]$SkipDLP,
-    [switch]$InsiderRisksOnly
+    [switch]$debug
 )
 
-# -----------------------------------------------------------
+#------------------------------------------------------------
 # Write the log
-# -----------------------------------------------------------
+#------------------------------------------------------------
 function logWrite([int]$phase, [bool]$result, [string]$logstring)
 {
     if ($result)
@@ -78,26 +46,14 @@ function logWrite([int]$phase, [bool]$result, [string]$logstring)
         }
 }
 
-# -----------------------------------------------------------
-# Sleep x seconds
-# -----------------------------------------------------------
-function goToSleep ([int]$seconds){
-    for ($i = 1; $i -le $seconds; $i++ )
-    {
-        $p = ([Math]::Round($i/$seconds, 2) * 100)
-        Write-Progress -Activity "Allowing time for the creation on backend..." -Status "$p% Complete:" -PercentComplete $p
-        Start-Sleep -Seconds 1
-    }
-}
-
-# -----------------------------------------------------------
-# Start the recovery steps
-# -----------------------------------------------------------
-function recovery
+#------------------------------------------------------------
+# Start the Recovery steps
+#------------------------------------------------------------
+function Recovery
 {
-    Write-host "Starting recovery..."
+    Write-host "Starting Recovery..."
     Set-Location -Path $LogPath
-    $global:recovery = $true
+    $global:Recovery = $true
     $savedLog = Import-Csv $LogCSV
     $lastEntry = (($savedLog.Count) - 1)
     Write-Debug "Last Entry #: $lastEntry"
@@ -112,7 +68,7 @@ function recovery
         {
             if ($lastEntryPhase -eq $savedLog[$lastEntry2].Phase)
                 {
-                    WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  PLease check with your instructor."
+                    WriteHost -ForegroundColor Red "The script has failed at Phase $lastEntryPhase repeatedly.  Please check with your instructor."
                     exitScript
                 }
                 else 
@@ -131,11 +87,28 @@ function recovery
                 }
 }
 
+#--------------------------------------------------------
+# Exit function
+#--------------------------------------------------------
+function exitScript
+{
+    # Get-PSSession | Remove-PSSession
+    if ($debug)
+        {
+            $DebugPreference = $oldDebugPreference
+            Stop-Transcript
+        }
+    exit
+}
 
-# -----------------------------------------------------------
+#######################################################################################
+#########                   I N I T I A L I Z A T I O N                      ##########
+#######################################################################################
+
+#------------------------------------------------------------
 # Test the log path (Step 0)
-# -----------------------------------------------------------
-function initialization
+#------------------------------------------------------------
+function Initialization
 {
     $pathExists = Test-Path($LogPath)
     if (!$pathExists)
@@ -147,9 +120,9 @@ function initialization
         logWrite 0 $true "Initialization completed"
 }
 
-# -----------------------------------------------------------
+#------------------------------------------------------------
 # Connect to AzureAD (Step 1)
-# -----------------------------------------------------------
+#------------------------------------------------------------
 function ConnectAzureAD
 {
     try 
@@ -183,24 +156,17 @@ function ConnectAzureAD
                        
                         }
             }
-    if($global:recovery -eq $false)
-        {
-            logWrite 1 $true "Successfully connected to Azure AD."
-            if ($InsiderRisksOnly -eq $true)
-            {
-                $global:nextPhase = 41
-            }
-            else 
-                {
-                    $global:nextPhase++
-                }
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
+    if($global:Recovery -eq $false)
+    {
+        logWrite 1 $true "Successfully connected to Azure AD."
+        $global:nextPhase++
+        Write-Debug "nextPhase set to $global:nextPhase"
+    }
 }
 
-# -----------------------------------------------------------
+#------------------------------------------------------------
 # Connect to Microsoft Online (Step 2)
-# -----------------------------------------------------------
+#------------------------------------------------------------
 function ConnectMsol
 {
     try 
@@ -234,119 +200,50 @@ function ConnectMsol
                    
                     }
         }
-        if($global:recovery -eq $false)
+        if($global:Recovery -eq $false)
             {
-                logWrite 2 $true "Successfully connected to Microsoft Online"
+                logWrite 2 $true "Successfully connected to Microsoft Online."
                 $global:nextPhase++
                 Write-Debug "nextPhase set to $global:nextPhase"
             }
 }
 
-# -------------------------------------------------------
-# Download Workshop Script (Step 9)
-# -------------------------------------------------------
-function downloadscripts
+#######################################################################################
+#########                    I N S I D E R     R I S K S                     ##########
+#######################################################################################
+
+#--------------------------------------------------------
+# Insider Risks - Download script (Step 3)
+#--------------------------------------------------------
+function DownloadScripts
 {
     try
         {
-            #General scripts
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/Update-Hub.ps1 -OutFile "$($LogPath)Update-Hub.ps1" -ErrorAction Stop
-            #Labels scritp
-            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile $($LogPath)wks-new-label.ps1 -ErrorAction Stop"
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-label.ps1 -OutFile "$($LogPath)wks-new-label.ps1" -ErrorAction Stop
-            #DLP Script
-            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile $($LogPath)wks-new-DLP.ps1 -ErrorAction Stop"
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-DLP.ps1 -OutFile "$($LogPath)wks-new-DLP.ps1" -ErrorAction Stop
-            #Retention script
-            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile $($LogPath)wks-new-retention.ps1 -ErrorAction Stop"
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-retention.ps1 -OutFile "$($LogPath)wks-new-retention.ps1" -ErrorAction Stop
-            #InsiderRisk scripts
-            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile $($LogPath)wks-new-HRConnector.ps1 -ErrorAction Stop"
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/WKSPlus-M365SCC/main/Compliance%20Center/wks-new-HRConnector.ps1 -OutFile "$($LogPath)wks-new-HRConnector.ps1" -ErrorAction Stop
-            Write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile $($LogPath)upload_termination_records.ps1 -ErrorAction Stop"
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-hrconnector-sample-scripts/master/upload_termination_records.ps1 -OutFile "$($LogPath)upload_termination_records.ps1" -ErrorAction Stop
+            #ref.:https://docs.microsoft.com/en-us/microsoft-365/compliance/import-hr-data?view=o365-worldwide#step-4-run-the-sample-script-to-upload-your-hr-data
+            write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-compliance-connector-sample-scripts/master/sample_script.ps1 -OutFile $($LogPath)upload_termination_records.ps1 -ErrorAction Stop"
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-compliance-connector-sample-scripts/master/sample_script.ps1 -OutFile "$($LogPath)upload_termination_records.ps1" -ErrorAction Stop
+            $global:Recovery = $false #There no Recover process from here. All the steps below will be executed.
         } 
         catch 
             {
                 write-Debug $error[0].Exception
-                logWrite 3 $false "Unable to download the workshop scripts from GitHub! Exiting."
+                logWrite 3 $false "Unable to download the script from GitHub! Exiting."
                 exitScript
             }
-    if($global:recovery -eq $false)
+
+    if($global:Recovery -eq $false)
         {
-            logWrite 3 $True "Successfully downloaded the workshop scripts."
+            logWrite 3 $True "Successfully downloaded the script from GitHub."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }       
 
-
-#######################################################################################
-#########                    I N S I D E R     R I S K S                     ##########
-#######################################################################################
-
-# -------------------------------------------------------
-# InsiderRisks - Create an Azure App (Step 41)
-# -------------------------------------------------------
-function InsiderRisks_CreateAzureApp
-{
-    try
-        {
-            $AzureADAppReg = New-AzureADApplication -DisplayName HRConnector -AvailableToOtherTenants $false -ErrorAction Stop
-            $appname = $AzureADAppReg.DisplayName
-            $global:appid = $AzureADAppReg.AppID
-            $AzureTenantID = Get-AzureADTenantDetail
-            $global:tenantid = $AzureTenantID.ObjectId
-            $AzureSecret = New-AzureADApplicationPasswordCredential -CustomKeyIdentifier PrimarySecret -ObjectId $azureADAppReg.ObjectId -EndDate ((Get-Date).AddMonths(6)) -ErrorAction Stop
-            $global:Secret = $AzureSecret.value
-
-            write-host "##################################################################" -ForegroundColor Green
-            write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
-            write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##   App name  : $appname                                    ##" -ForegroundColor Green
-            write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
-            write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
-            write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
-            write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##################################################################" -ForegroundColor Green
-            write-host
-            Write-host "Return to the lab instructions" -ForegroundColor Yellow
-            Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
-            write-host
-        }
-        catch 
-        {
-            write-Debug $error[0].Exception
-            logWrite 4 $false "Error creating the Azure App for HR Connector"
-            exitScript
-        }
-    if($global:recovery -eq $false)
-        {
-            logWrite 4 $True "Successfully created the Azure App for HR Connector."
-            $global:nextPhase++
-            Write-Debug "nextPhase set to $global:nextPhase"
-        }
-}
-
-# -------------------------------------------------------
-# InsiderRisks - Create the CSV file (Step 42)
-# -------------------------------------------------------
+#--------------------------------------------------------
+# InsiderRisks - Create the CSV file (Step 4)
+#--------------------------------------------------------
 function InsiderRisks_CreateCSVFile
 {
-    $CurrentPath = Get-Location
-    write-host "##################################################################" -ForegroundColor Green
-    write-host "##                                                              ##" -ForegroundColor Green
-    write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
-    write-host "##                                                              ##" -ForegroundColor Green
-    write-host "##   The CSV file was created on $CurrentPath\wks-new-HRConnector.csv" -ForegroundColor Green
-    write-host "##                                                              ##" -ForegroundColor Green
-    write-host "##################################################################" -ForegroundColor Green
-    write-host
-    Write-host "Return to the lab instructions" -ForegroundColor Yellow
-    Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
-    write-host
-
     try 
         {
             $global:HRConnectorCSVFile = "$($LogPath)HRConnector.csv"
@@ -402,46 +299,126 @@ function InsiderRisks_CreateCSVFile
         catch 
         {
             write-Debug $error[0].Exception
-            logWrite 5 $false "Error creating the HRConnector.csv file"
+            logWrite 4 $false "Error creating the HRConnector.csv file."
             exitScript
         }
-    if($global:recovery -eq $false)
+    if($global:Recovery -eq $false)
         {
-            logWrite 5 $True "Successfully created the HRConnector.csv file."
+            logWrite 4 $True "Successfully created the HRConnector.csv file."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }
 
-# -------------------------------------------------------
-# InsiderRisks - Upload CSV file (Step 43)
-# -------------------------------------------------------
+#--------------------------------------------------------
+# InsiderRisks - Create an Azure App (Step 5)
+#--------------------------------------------------------
+function InsiderRisks_CreateAzureApp
+{
+    try
+        {
+            $appExists = $null
+            $appExists = Get-AzureADApplication -SearchString "HRConnector"
+            $AzureTenantID = Get-AzureADTenantDetail
+            $global:tenantid = $AzureTenantID.ObjectId
+            if ($null -eq $appExists)
+                {
+                    $AzureADAppReg = New-AzureADApplication -DisplayName HRConnector -AvailableToOtherTenants $false -ErrorAction Stop
+                    $appname = $AzureADAppReg.DisplayName
+                    $global:appid = $AzureADAppReg.AppID
+                    #$AzureTenantID = Get-AzureADTenantDetail
+                    #$global:tenantid = $AzureTenantID.ObjectId
+                    $AzureSecret = New-AzureADApplicationPasswordCredential -CustomKeyIdentifier PrimarySecret -ObjectId $azureADAppReg.ObjectId -EndDate ((Get-Date).AddMonths(6)) -ErrorAction Stop
+                    $global:Secret = $AzureSecret.value
+                    "Secret" | out-file _appsecret.txt -Encoding utf8 -ErrorAction Stop
+                    $global:Secret | out-file _appsecret.txt -Encoding utf8 -Append -ErrorAction Stop
+                    write-host
+                    write-host "##########################################################################################" -ForegroundColor Green
+                    write-host "##                                                                                      ##" -ForegroundColor Green
+                    write-host "##     WorkshopPLUS: Microsoft 365 Security and Compliance - Microsoft Purview  and     ##" -ForegroundColor Green
+                    write-host "##     Activate Microsoft 365 Security and Compliance: Purview Manage Insider Risks     ##" -ForegroundColor Green
+                    write-host "##                                                                                      ##" -ForegroundColor Green            
+                    write-host "##   App name  : $appname                                                            ##" -ForegroundColor Green
+                    write-host "##   App ID    : $global:appid                                   ##" -ForegroundColor Green
+                    write-host "##   Tenant ID : $global:tenantid                                   ##" -ForegroundColor Green
+                    write-host "##   App Secret: $global:secret                           ##" -ForegroundColor Green
+                    write-host "##                                                                                      ##" -ForegroundColor Green
+                    write-host "##########################################################################################" -ForegroundColor Green
+                    write-host
+                    Write-host "Return to the lab instructions" -ForegroundColor Yellow
+                    Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
+                    write-host
+                }
+                else 
+                    {
+                        $appname = $appExists.DisplayName
+                        $global:appid = $appExists.AppId
+                        $Secretfile = Import-Csv _appsecret.txt -Encoding utf8 -ErrorAction Stop
+                        $global:Secret = $Secretfile.Secret
+                        write-host
+                        write-host "##########################################################################################" -ForegroundColor Green
+                        write-host "##                                                                                      ##" -ForegroundColor Green
+                        write-host "##     WorkshopPLUS: Microsoft 365 Security and Compliance - Microsoft Purview  and     ##" -ForegroundColor Green
+                        write-host "##     Activate Microsoft 365 Security and Compliance: Purview Manage Insider Risks     ##" -ForegroundColor Green
+                        write-host "##                                                                                      ##" -ForegroundColor Green            
+                        write-host "##   App name  : $appname                                                            ##" -ForegroundColor Green
+                        write-host "##   App ID    : $global:appid                                   ##" -ForegroundColor Green
+                        write-host "##   Tenant ID : $global:tenantid                                   ##" -ForegroundColor Green
+                        write-host "##   App Secret: $global:secret                           ##" -ForegroundColor Green
+                        write-host "##                                                                                      ##" -ForegroundColor Green
+                        write-host "##########################################################################################" -ForegroundColor Green
+                        write-host
+                        Write-host "Return to the lab instructions" -ForegroundColor Yellow
+                        Write-host "When requested, press ENTER to continue." -ForegroundColor Yellow
+                        write-host
+                        logWrite 5 $True "Azure App for HR Connector already exists, so this step was skipped."
+                    }
+        }
+        catch 
+        {
+            write-Debug $error[0].Exception
+            logWrite 5 $false "Error creating the Azure App for HR Connector."
+            exitScript
+        }
+    if($global:Recovery -eq $false)
+        {
+            logWrite 5 $True "Successfully created the Azure App for HR Connector."
+            $global:nextPhase++
+            Write-Debug "nextPhase set to $global:nextPhase"
+        }
+}
+
+#--------------------------------------------------------
+# InsiderRisks - Upload CSV file (Step 6)
+#--------------------------------------------------------
 function InsiderRisks_UploadCSV
 {
-
     try   
         {
+            Write-Host
             $ConnectorJobID = Read-Host "Paste the Connector job ID"
             if ($null -eq $ConnectorJobID)
                 {
                     $ConnectorJobID = Read-Host "Paste the Connector job ID"
                 }
+            "JobID" | out-file _jobID.txt -Encoding utf8 -ErrorAction Stop
+            $ConnectorJobID | out-file _jobID.txt -Encoding utf8 -Append -ErrorAction Stop
             Write-Host
-            write-host "##################################################################" -ForegroundColor Green
-            write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##   Microsoft 365 Security and Compliance: Compliance Center   ##" -ForegroundColor Green
-            write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##   App ID    : $global:appid           ##" -ForegroundColor Green
-            write-host "##   Tenant ID : $global:tenantid           ##" -ForegroundColor Green
-            write-host "##   App Secret: $global:secret   ##" -ForegroundColor Green
-            write-host "##   JobId     : $ConnectorJobID           ##" -ForegroundColor Green
-            write-host "##   CSV File  : $global:HRConnectorCSVFile           " -ForegroundColor Green
-            write-host "##                                                              ##" -ForegroundColor Green
-            write-host "##################################################################" -ForegroundColor Green
+            write-host "##########################################################################################" -ForegroundColor Green
+            write-host "##                                                                                      ##" -ForegroundColor Green
+            write-host "##     WorkshopPLUS: Microsoft 365 Security and Compliance - Microsoft Purview  and     ##" -ForegroundColor Green
+            write-host "##     Activate Microsoft 365 Security and Compliance: Purview Manage Insider Risks     ##" -ForegroundColor Green
+            write-host "##                                                                                      ##" -ForegroundColor Green            
+            write-host "##   App ID    : $global:appid                                   ##" -ForegroundColor Green
+            write-host "##   Tenant ID : $global:tenantid                                   ##" -ForegroundColor Green
+            write-host "##   App Secret: $global:secret                           ##" -ForegroundColor Green
+            write-host "##   JobId     : $ConnectorJobID                                   ##" -ForegroundColor Green
+            write-host "##   CSV File  : $global:HRConnectorCSVFile   ##" -ForegroundColor Green
+            write-host "##                                                                                      ##" -ForegroundColor Green
+            write-host "##########################################################################################" -ForegroundColor Green
             Write-Host
-
             Set-Location -Path "$env:UserProfile\Desktop\SCLabFiles\Scripts"
-            .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -csvFilePath $HRConnectorCSVFile
+            .\upload_termination_records.ps1 -tenantId $tenantId -appId $appId -appSecret $Secret -jobId $ConnectorJobID -FilePath $HRConnectorCSVFile
         }
         catch 
         {
@@ -449,75 +426,54 @@ function InsiderRisks_UploadCSV
             logWrite 6 $false "Error uploading the HRConnector.csv file"
             exitScript
         }
-    if($global:recovery -eq $false)
+    if($global:Recovery -eq $false)
         {
-            logWrite 6 $True "Successfully creating the HRConnector.csv file."
+            logWrite 6 $True "Successfully uploading the HRConnector.csv file."
             $global:nextPhase++
             Write-Debug "nextPhase set to $global:nextPhase"
         }
 }
 
-# -------------------------------------------------------
-# Exit function
-# -------------------------------------------------------
-function exitScript
-{
-    # Get-PSSession | Remove-PSSession
-    if ($debug)
-        {
-            $DebugPreference = $oldDebugPreference
-            Stop-Transcript
-        }
-    exit
-}
+#######################################################################################
+#########            S C R I P T    S T A R T S   H E R E                    ##########
+#######################################################################################
 
-# -------------------------------------------------------
-# FUNCTION - Start-SnCCompliance
-# -------------------------------------------------------
-
-# -------------------------------------------------------
+#--------------------------------------------------------
 # Variable definition - General
-# -------------------------------------------------------
+#--------------------------------------------------------
 $LogPath = "$env:UserProfile\Desktop\SCLabFiles\Scripts\"
 $LogCSV = "$env:UserProfile\Desktop\SCLabFiles\Scripts\InsiderRisks_Log.csv"
 $global:nextPhase = 1
-$global:recovery = $false
+$global:Recovery = $false
+#Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 
-# -----------------------------------------------------------
+#------------------------------------------------------------
 # Debug mode
-# -----------------------------------------------------------
+#------------------------------------------------------------
 $oldDebugPreference = $DebugPreference
 if($debug)
 {
     write-debug "Debug Enabled"
     $DebugPreference = "Continue"
-    Start-Transcript -Path "$($LogPath)download-debug.txt"
+   Start-Transcript -Path "$($LogPath)download-debug.txt"
 }
 
 if(!(Test-Path($logCSV)))
     {
-        # if log doesn't exist then must be first time we run this, so go to initialization
+        # if log doesn't exist then must be first time we run this, so go to initialization function
         Write-Debug "Entering Initialization"
-        initialization
+        Initialization
     } 
         else 
             {
                 # if log already exists, check if we need to recover
                 Write-Debug "Entering Recovery"
-                recovery
-                ConnectAzureAD
-                ConnectMSOL
-                ConnectEXO
-                ConnectSCC
-                ConnectTeams
-                $tenantName = GetDomain
-                Write-Debug "$tenantName Returned"
-                ConnectSPO $tenantName
+                Recovery
             }
 
-# -------------------------------------------------------
+#--------------------------------------------------------
 # use variable to control phases
-# -------------------------------------------------------
+#--------------------------------------------------------
 if($nextPhase -eq 1)
     {
         write-debug "Phase $nextPhase"
@@ -533,20 +489,19 @@ if($nextPhase -eq 2)
 if($nextPhase -eq 3)
     {
         write-debug "Phase $nextPhase"
-        downloadscripts
+        DownloadScripts
     }
 
 if($nextPhase -eq 4)
     {
         write-debug "Phase $nextPhase"
-        InsiderRisks_CreateAzureApp
-        $answer = Read-Host "Press ENTER to continue"
+        InsiderRisks_CreateCSVFile
     }
 
 if($nextPhase -eq 5)
     {
         write-debug "Phase $nextPhase"
-        InsiderRisks_CreateCSVFile
+        InsiderRisks_CreateAzureApp
         $answer = Read-Host "Press ENTER to continue"
     }
 
@@ -556,4 +511,10 @@ if($nextPhase -eq 6)
         InsiderRisks_UploadCSV
     }
 
-write-host "Configurarion completed"
+if($nextPhase -eq 7)
+    {
+        write-debug "Phase $nextPhase"
+        write-host "Configuration completed"
+        logWrite 7 $true "Configuration completed"
+        exitScript
+    }
