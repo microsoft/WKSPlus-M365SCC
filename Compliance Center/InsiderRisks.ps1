@@ -22,7 +22,7 @@
     ##################################################################################################
 
 .Version
-    3.22 (May 27th 2022)
+    1.3 (June 13th, 2022)
 #>
 
 Param (
@@ -225,7 +225,7 @@ function DownloadScripts
             #ref.:https://docs.microsoft.com/en-us/microsoft-365/compliance/import-hr-data?view=o365-worldwide#step-4-run-the-sample-script-to-upload-your-hr-data
             write-Debug "Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-compliance-connector-sample-scripts/master/sample_script.ps1 -OutFile $($LogPath)upload_termination_records.ps1 -ErrorAction Stop"
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/microsoft/m365-compliance-connector-sample-scripts/master/sample_script.ps1 -OutFile "$($LogPath)upload_termination_records.ps1" -ErrorAction Stop
-            $global:Recovery = $false #There no Recover process from here. All the steps below will be executed.
+            $global:Recovery = $false #There no Recover process from here. All the steps below (3, 4, and 5) will be executed.
         } 
         catch 
             {
@@ -250,53 +250,16 @@ function InsiderRisks_CreateCSVFile
     try 
         {
             $global:HRConnectorCSVFile = "$($LogPath)HRConnector.csv"
-            "HRScenarios,EmailAddress,ResignationDate,LastWorkingDate,EffectiveDate,YearsOnLevel,OldLevel,NewLevel,PerformanceRemarks,PerformanceRating,ImprovementRemarks,ImprovementRating" | out-file $HRConnectorCSVFile -Encoding utf8
+            "HRScenarios,EmailAddress,ResignationDate,LastWorkingDate" | out-file $HRConnectorCSVFile -Encoding utf8
             $Users = Get-AzureADuser | where-object {$null -ne $_.AssignedLicenses} | Select-Object UserPrincipalName -ErrorAction Stop
-
             foreach ($User in $Users)
                 {
                     $EmailAddress = $User.UserPrincipalName
-                    #Resignation block
                     $RandResignationDate  = Get-Random -Minimum 20 -Maximum 30
                     $ResignationDate = (Get-Date).AddDays(-$RandResignationDate).ToString("yyyy-MM-ddTH:mm:ssZ")
                     $RandLastWorkingDate = Get-Random -Minimum 10 -Maximum 20
                     $LastWorkingDate = (Get-Date).AddDays(-$RandLastWorkingDate).ToString("yyyy-MM-ddTH:mm:ssZ")
-                    $RandEffectiveDate = Get-Random -Minimum 365 -Maximum 1000
-                    $EffectiveDate = (Get-Date).AddDays(-$RandEffectiveDate).ToString("yyyy-MM-ddTH:mm:ssZ")
-                    #Employee level block
-                    $YearsOnLevel = Get-Random -Minimum 1 -Maximum 6
-                    $OldLevel = Get-Random -Minimum 57 -Maximum 64
-                    $NewLevel = $OldLevel--
-                    #performance and performance review block
-                    $RandRating = Get-Random -Minimum 1 -Maximum 4
-                    Switch ($RandRating) 
-                        {
-                            1 
-                                {
-                                    $PerformanceRemarks = "Achieved all commitments and exceptional results that surpassed expectations"
-                                    $PerformanceRating = "1 - Exceeded"
-                                    $ImprovementRemarks = $null
-                                    $ImprovementRating = $null
-                                }
-                            2 
-                                {
-                                    $PerformanceRemarks = "Achieved all commitments and expected results"
-                                    $PerformanceRating = "2 - Achieved"
-                                    $ImprovementRemarks = "Increase the team collaboration"
-                                    $ImprovementRating = "1 - Exceeded"
-                                }
-                            3
-                                {
-                                    $PerformanceRemarks = "Failed to achieve commitments or expected results or both"
-                                    $PerformanceRating = "3 - Underperformed"
-                                    $ImprovementRemarks = "Increase overall performance"
-                                    $ImprovementRating = "2 - Achieved"
-                                }
-                        }
-                    "Resignation,$EmailAddress,$ResignationDate,$LastWorkingDate," | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
-                    "Job level changes,$EmailAddress,,,$EffectiveDate,$YearsOnLevel,Level $OldLevel,Level $NewLevel" | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
-                    "Performance review,$EmailAddress,,,$EffectiveDate,,,,$PerformanceRemarks,$PerformanceRating" | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
-                    "Performance improvement plan,$EmailAddress,,,$EffectiveDate,,,,,,$ImprovementRemarks,$ImprovementRating,"  | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
+                    "Resignation,$EmailAddress,$ResignationDate,$LastWorkingDate" | out-file $HRConnectorCSVFile -Encoding utf8 -Append -ErrorAction Stop
                 }
         }
         catch 
@@ -356,7 +319,18 @@ function InsiderRisks_CreateAzureApp
                     {
                         $appname = $appExists.DisplayName
                         $global:appid = $appExists.AppId
-                        $Secretfile = Import-Csv _appsecret.txt -Encoding utf8 -ErrorAction Stop
+                        $SecretFileExists = Test-Path _appsecret.txt
+                        if ($SecretFileExists)
+                            {
+                                $Secretfile = Import-Csv _appsecret.txt -Encoding utf8 -ErrorAction SilentlyContinue
+                            }
+                            else
+                                {
+                                    Remove-AzureADApplication -ObjectId $appExists.ObjectId
+                                    lastEntryPhase = 2
+                                    logWrite 5 $false "Azure App already exists, but the secret file was not found. Try again."
+                                    #InsiderRisks_CreateAzureApp
+                                }
                         $global:Secret = $Secretfile.Secret
                         write-host
                         write-host "##########################################################################################" -ForegroundColor Green
@@ -380,7 +354,7 @@ function InsiderRisks_CreateAzureApp
         catch 
         {
             write-Debug $error[0].Exception
-            logWrite 5 $false "Error creating the Azure App for HR Connector."
+            logWrite 5 $false "Error creating the Azure App for HR Connector. Try again."
             exitScript
         }
     if($global:Recovery -eq $false)
@@ -456,9 +430,9 @@ $global:Recovery = $false
 $oldDebugPreference = $DebugPreference
 if($debug)
 {
-    write-debug "Debug Enabled"
+    Write-debug "Debug Enabled"
     $DebugPreference = "Continue"
-   Start-Transcript -Path "$($LogPath)download-debug.txt"
+    Start-Transcript -Path "$($LogPath)download-debug.txt"
 }
 
 if(!(Test-Path($logCSV)))
